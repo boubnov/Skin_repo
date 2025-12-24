@@ -8,6 +8,7 @@ from ..auth import get_current_user
 router = APIRouter(prefix="/users", tags=["users"])
 
 class ProfileUpdate(BaseModel):
+    username: Optional[str] = None
     name: Optional[str] = None
     age: Optional[int] = None
     skin_type: Optional[str] = None
@@ -19,6 +20,7 @@ class ProfileUpdate(BaseModel):
 
 class ProfileResponse(BaseModel):
     id: int
+    username: Optional[str]
     name: Optional[str]
     email: Optional[str]
     age: Optional[int]
@@ -49,6 +51,7 @@ def get_profile(
     
     return ProfileResponse(
         id=profile.id,
+        username=profile.username,
         name=profile.name,
         email=current_user.email,
         age=profile.age,
@@ -73,6 +76,16 @@ def update_profile(
         # Create new profile
         profile = models.Profile(user_id=current_user.id)
         db.add(profile)
+
+    # Check username uniqueness if changing
+    if profile_data.username is not None and profile_data.username != profile.username:
+        # Check if username exists
+        existing = db.query(models.Profile).filter(
+            models.Profile.username == profile_data.username
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        profile.username = profile_data.username
     
     # Update fields if provided
     if profile_data.name is not None:
@@ -97,6 +110,7 @@ def update_profile(
     
     return ProfileResponse(
         id=profile.id,
+        username=profile.username,
         name=profile.name,
         email=current_user.email,
         age=profile.age,

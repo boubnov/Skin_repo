@@ -6,6 +6,7 @@ import { useWindowDimensions, Platform, ActivityIndicator, View } from 'react-na
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ProfileSetupScreen from './src/screens/ProfileSetupScreen';
+import WelcomeScreen from './src/screens/WelcomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import WebDashboardScreen from './src/screens/web/WebDashboardScreen';
@@ -95,6 +96,7 @@ function AppNavigator() {
   if (userToken == null) {
     return (
       <Stack.Navigator>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     );

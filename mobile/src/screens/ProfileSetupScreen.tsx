@@ -9,6 +9,7 @@ const SKIN_CONCERNS = ['Acne', 'Aging', 'Dark Spots', 'Dryness', 'Redness', 'Lar
 
 export default function ProfileSetupScreen({ navigation }: any) {
     const { setHasProfile } = useAuth();
+    const [username, setUsername] = useState('');
     const [name, setName] = useState('');
     const [age, setAge] = useState('');
     const [skinType, setSkinType] = useState('');
@@ -28,6 +29,7 @@ export default function ProfileSetupScreen({ navigation }: any) {
         try {
             const response = await api.get('/users/profile');
             if (response.data) {
+                setUsername(response.data.username || '');
                 setName(response.data.name || '');
                 setAge(response.data.age?.toString() || '');
                 setSkinType(response.data.skin_type || '');
@@ -59,6 +61,7 @@ export default function ProfileSetupScreen({ navigation }: any) {
         setSaving(true);
         try {
             await api.put('/users/profile', {
+                username: username || null,
                 name: name || null,
                 age: parseInt(age),
                 skin_type: skinType,
@@ -67,12 +70,23 @@ export default function ProfileSetupScreen({ navigation }: any) {
                 concerns: concerns.length > 0 ? concerns : null
             });
 
-            Alert.alert('Success', 'Profile saved successfully!', [
-                { text: 'OK', onPress: () => setHasProfile(true) }
-            ]);
+            // Success! Update auth state to trigger navigation
+            if (Platform.OS === 'web') {
+                // For web, sometimes alert callback is flaky, so we just set it
+                // But feedback is nice. Let's show a toast or just Alert and then wait briefly?
+                // Or better, just update state.
+                alert('Profile saved!');
+                setHasProfile(true);
+            } else {
+                Alert.alert('Success', 'Profile saved successfully!', [
+                    { text: 'OK', onPress: () => setHasProfile(true) }
+                ]);
+            }
+
         } catch (error: any) {
             console.error('Profile save error:', error);
-            Alert.alert('Error', 'Could not save profile. Please try again.');
+            const msg = error.response?.data?.detail || 'Could not save profile. Please try again.';
+            Alert.alert('Error', msg);
         } finally {
             setSaving(false);
         }
@@ -101,16 +115,29 @@ export default function ProfileSetupScreen({ navigation }: any) {
                     Help us personalize your skincare recommendations
                 </Text>
 
-                {/* Name */}
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Name <Text style={styles.optional}>(optional)</Text></Text>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Your name"
-                        placeholderTextColor={COLORS.textLight}
-                    />
+                {/* Username & Name */}
+                <View style={styles.row}>
+                    <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                        <Text style={styles.label}>Username <Text style={styles.optional}>(unique)</Text></Text>
+                        <TextInput
+                            style={styles.input}
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="@user"
+                            placeholderTextColor={COLORS.textLight}
+                            autoCapitalize="none"
+                        />
+                    </View>
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.label}>Name <Text style={styles.optional}>(optional)</Text></Text>
+                        <TextInput
+                            style={styles.input}
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="Your name"
+                            placeholderTextColor={COLORS.textLight}
+                        />
+                    </View>
                 </View>
 
                 {/* Age - Required */}
@@ -254,6 +281,10 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
         textAlign: 'center',
         marginBottom: SPACING.xl,
+    },
+    row: {
+        flexDirection: 'row',
+        marginBottom: SPACING.l,
     },
     inputGroup: {
         marginBottom: SPACING.l,

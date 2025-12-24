@@ -36,6 +36,7 @@ class Profile(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    username = Column(String, unique=True, index=True, nullable=True)
     name = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
     ethnicity = Column(String, nullable=True)
