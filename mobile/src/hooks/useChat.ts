@@ -99,7 +99,8 @@ export const useChat = () => {
                 body: JSON.stringify({
                     message: userMsg.content,
                     history: history,
-                    user_location: userLocation
+                    user_location: userLocation,
+                    image_base64: userMsg.image || null  // Send image if present
                 })
             });
 

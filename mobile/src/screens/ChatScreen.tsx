@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, ActivityIndicator, Image, Alert, ActionSheetIOS } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import ChatBubble from '../components/ChatBubble';
 import { useChat } from '../hooks/useChat';
-import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme';
 
 // Professional quick prompts
 const QUICK_PROMPTS = [
@@ -13,18 +14,91 @@ const QUICK_PROMPTS = [
 ];
 
 export default function ChatScreen({ navigation }: any) {
-    const { messages, isLoading, apiKey, sendMessage, setMessages } = useChat();
+    const { messages, isLoading, sendMessage, setMessages } = useChat();
     const [inputText, setInputText] = useState('');
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const flatListRef = useRef<FlatList>(null);
 
     const handleSend = () => {
-        if (!inputText.trim()) return;
-        sendMessage(inputText);
+        if (!inputText.trim() && !selectedImage) return;
+        sendMessage(inputText, selectedImage || undefined);
         setInputText('');
+        setSelectedImage(null);
     };
 
     const handlePromptPress = (prompt: string) => {
         sendMessage(prompt);
+    };
+
+    const pickImage = async (useCamera: boolean) => {
+        try {
+            // Request permissions
+            if (useCamera) {
+                const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+                    return;
+                }
+            } else {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('Permission needed', 'Please allow photo library access to select images.');
+                    return;
+                }
+            }
+
+            const result = useCamera
+                ? await ImagePicker.launchCameraAsync({
+                    mediaTypes: ['images'],
+                    allowsEditing: true,
+                    aspect: [4, 3],
+                    quality: 0.7,
+                    base64: true,
+                })
+                : await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ['images'],
+                    allowsEditing: true,
+                    aspect: [4, 3],
+                    quality: 0.7,
+                    base64: true,
+                });
+
+            if (!result.canceled && result.assets[0]) {
+                const asset = result.assets[0];
+                // Store base64 with data URI prefix for display and sending
+                const base64Image = `data:image/jpeg;base64,${asset.base64}`;
+                setSelectedImage(base64Image);
+            }
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert('Error', 'Failed to pick image. Please try again.');
+        }
+    };
+
+    const showImageOptions = () => {
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ['Cancel', 'Take Photo', 'Choose from Library'],
+                    cancelButtonIndex: 0,
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) pickImage(true);
+                    else if (buttonIndex === 2) pickImage(false);
+                }
+            );
+        } else {
+            // For Android/Web, show simple alert with options
+            Alert.alert(
+                'Add Photo',
+                'Choose an option',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Take Photo', onPress: () => pickImage(true) },
+                    { text: 'Choose from Library', onPress: () => pickImage(false) },
+                ]
+            );
+        }
     };
 
     // Show welcome state when no messages
@@ -89,23 +163,45 @@ export default function ChatScreen({ navigation }: any) {
                 </View>
             )}
 
+            {/* Selected image preview */}
+            {selectedImage && (
+                <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                    <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setSelectedImage(null)}
+                    >
+                        <Text style={styles.removeImageText}>✕</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {/* Input area */}
             <View style={styles.inputArea}>
                 <View style={styles.inputWrapper}>
+                    {/* Image picker button */}
+                    <TouchableOpacity
+                        style={styles.imageButton}
+                        onPress={showImageOptions}
+                        disabled={isLoading}
+                    >
+                        <Text style={styles.imageButtonText}>📷</Text>
+                    </TouchableOpacity>
+
                     <TextInput
                         style={styles.input}
                         value={inputText}
                         onChangeText={setInputText}
-                        placeholder="Ask about skincare..."
+                        placeholder={selectedImage ? "Describe your concern..." : "Ask about skincare..."}
                         placeholderTextColor={COLORS.textLight}
                         editable={!isLoading}
                         onSubmitEditing={handleSend}
                         multiline
                     />
                     <TouchableOpacity
-                        style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+                        style={[styles.sendButton, ((!inputText.trim() && !selectedImage) || isLoading) && styles.sendButtonDisabled]}
                         onPress={handleSend}
-                        disabled={!inputText.trim() || isLoading}
+                        disabled={(!inputText.trim() && !selectedImage) || isLoading}
                     >
                         <Text style={styles.sendButtonText}>Send</Text>
                     </TouchableOpacity>
@@ -212,6 +308,37 @@ const styles = StyleSheet.create({
         color: COLORS.textLight,
     },
 
+    // Image preview
+    imagePreviewContainer: {
+        marginHorizontal: SPACING.m,
+        marginBottom: SPACING.s,
+        position: 'relative',
+        alignSelf: 'flex-start',
+    },
+    imagePreview: {
+        width: 100,
+        height: 100,
+        borderRadius: RADIUS.m,
+        backgroundColor: COLORS.border,
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: COLORS.error,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...SHADOWS.small,
+    },
+    removeImageText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: 'bold',
+    },
+
     // Input area
     inputArea: {
         padding: SPACING.m,
@@ -224,6 +351,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-end',
         gap: SPACING.s,
+    },
+    imageButton: {
+        width: 44,
+        height: 44,
+        borderRadius: RADIUS.m,
+        backgroundColor: COLORS.secondaryButton,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageButtonText: {
+        fontSize: 20,
     },
     input: {
         flex: 1,

@@ -71,7 +71,7 @@ class SkincareAgent:
         self.llm = llm
         self.llm_with_tools = self.llm.bind_tools(self.tools)
 
-    def run_stream(self, user_message: str, chat_history: List[Dict] = [], user_location: str = None):
+    def run_stream(self, user_message: str, chat_history: List[Dict] = [], user_location: str = None, image_base64: str = None):
         """
         Runs the agent loop and YIELDS chunks of the final text.
         Structure of yield:
@@ -79,6 +79,10 @@ class SkincareAgent:
         { "type": "products", "content": [...] }
         """
         system_text = "You are a helpful, safety-conscious Dermatology Assistant. Use 'product_retriever' to find products. Use 'store_locator' if the user asks where to buy something. ALWAYS check for allergies. Be concise."
+        
+        # Add image analysis instructions if image is provided
+        if image_base64:
+            system_text += " The user has provided an image for skin analysis. Carefully examine the image and provide relevant skincare advice based on what you observe."
         
         if user_location:
             system_text += f" User Location: {user_location}. Use this for store_locator queries."
@@ -94,7 +98,21 @@ class SkincareAgent:
             else:
                 messages.append(AIMessage(content=msg["content"]))
         
-        messages.append(HumanMessage(content=user_message))
+        # Create user message with optional image
+        if image_base64:
+            # Create multimodal message with image
+            # Strip data URI prefix if present
+            image_data = image_base64
+            if image_base64.startswith("data:"):
+                # Extract base64 part after comma
+                image_data = image_base64.split(",")[1] if "," in image_base64 else image_base64
+            
+            messages.append(HumanMessage(content=[
+                {"type": "text", "text": user_message or "Please analyze this skin image and provide advice."},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+            ]))
+        else:
+            messages.append(HumanMessage(content=user_message))
         
         # 1. First Call (Synchronous Decision)
         # We don't stream here because we need to know if it wants to use tools first.

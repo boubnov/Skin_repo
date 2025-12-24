@@ -17,6 +17,7 @@ class ChatRequest(BaseModel):
     message: str
     history: Optional[List[ChatMessage]] = []
     user_location: Optional[str] = None
+    image_base64: Optional[str] = None  # Base64 encoded image for vision analysis
 
 @router.post("/")
 def chat_endpoint(
@@ -109,7 +110,12 @@ def chat_endpoint(
         
         # Run Stream
         return StreamingResponse(
-            agent.run_stream(request.message, [h.dict() for h in request.history], user_location=request.user_location),
+            agent.run_stream(
+                request.message, 
+                [h.dict() for h in request.history], 
+                user_location=request.user_location,
+                image_base64=request.image_base64
+            ),
             media_type="application/x-ndjson"
         )
         
