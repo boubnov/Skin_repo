@@ -1,0 +1,52 @@
+# Testing Configuration
+# Copy this file to config.yaml and modify as needed
+
+# Available models (via novo-genai marketplace)
+# Uncomment and modify the model you want to test
+
+api:
+  # OpenAI-compatible endpoint
+  base_url: "https://api.marketplace.novo-genai.com/v1"
+  api_key: "${OPENAI_API_KEY}"  # Set via environment variable
+  
+  # Model options:
+  # - gemini_3_pro (default)
+  # - gpt-4o
+  # - claude-3-sonnet
+  model: "gemini_3_pro"
+
+# Agent behavior settings
+agent:
+  temperature: 0.0  # 0 = deterministic, 1 = creative
+  
+  # System prompt customization
+  system_prompt: |
+    You are a helpful, safety-conscious Dermatology Assistant. 
+    Use 'product_retriever' to find products. 
+    Use 'store_locator' if the user asks where to buy something. 
+    ALWAYS check for allergies. Be concise.
+
+# Test cases for evaluation
+test_cases:
+  - name: "Basic greeting"
+    input: "Hello"
+    expected_behavior: "Should greet and offer help"
+    
+  - name: "Product recommendation"
+    input: "I have oily skin with acne, what products do you recommend?"
+    expected_behavior: "Should call product_retriever and suggest products"
+    
+  - name: "Image analysis"
+    input: "What do you see in this image?"
+    image: "test_images/sample_skin.jpg"  # Optional test image
+    expected_behavior: "Should describe skin condition and suggest products"
+    
+  - name: "Allergy check"
+    input: "Is CeraVe safe for someone allergic to parabens?"
+    expected_behavior: "Should check ingredients and warn about allergens"
+
+# Evaluation metrics
+evaluation:
+  log_responses: true
+  save_to_file: "test_results.json"
+  compare_models: false  # Set true to run same tests on multiple models
