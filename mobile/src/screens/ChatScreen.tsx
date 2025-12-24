@@ -18,6 +18,7 @@ export default function ChatScreen({ navigation }: any) {
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const flatListRef = useRef<FlatList>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleSend = () => {
         if (!inputText.trim() && !selectedImage) return;
@@ -76,7 +77,12 @@ export default function ChatScreen({ navigation }: any) {
     };
 
     const showImageOptions = () => {
-        if (Platform.OS === 'ios') {
+        if (Platform.OS === 'web') {
+            // For web, use file input
+            if (fileInputRef.current) {
+                fileInputRef.current.click();
+            }
+        } else if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
                     options: ['Cancel', 'Take Photo', 'Choose from Library'],
@@ -88,7 +94,7 @@ export default function ChatScreen({ navigation }: any) {
                 }
             );
         } else {
-            // For Android/Web, show simple alert with options
+            // For Android, show simple alert with options
             Alert.alert(
                 'Add Photo',
                 'Choose an option',
@@ -98,6 +104,23 @@ export default function ChatScreen({ navigation }: any) {
                     { text: 'Choose from Library', onPress: () => pickImage(false) },
                 ]
             );
+        }
+    };
+
+    // Handle web file input change
+    const handleWebFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setSelectedImage(base64String);
+            };
+            reader.readAsDataURL(file);
+        }
+        // Reset input so same file can be selected again
+        if (event.target) {
+            event.target.value = '';
         }
     };
 
@@ -187,6 +210,17 @@ export default function ChatScreen({ navigation }: any) {
                     >
                         <Text style={styles.imageButtonText}>📷</Text>
                     </TouchableOpacity>
+
+                    {/* Hidden file input for web */}
+                    {Platform.OS === 'web' && (
+                        <input
+                            ref={fileInputRef as any}
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={handleWebFileChange as any}
+                        />
+                    )}
 
                     <TextInput
                         style={styles.input}

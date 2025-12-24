@@ -64,7 +64,7 @@ export default function HomeScreen({ navigation }: any) {
             {/* Streak Card */}
             <View style={styles.streakCard}>
                 <View style={styles.streakLeft}>
-                    <Text style={styles.streakEmoji}>🔥</Text>
+                    <Text style={styles.streakEmoji}>○</Text>
                     <View>
                         <Text style={styles.streakNumber}>{streak}</Text>
                         <Text style={styles.streakLabel}>Day Streak</Text>
@@ -72,9 +72,9 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
                 <View style={styles.streakRight}>
                     <Text style={styles.streakMotivation}>
-                        {streak === 0 ? 'Start your streak today!' :
-                            streak < 7 ? 'Keep it up!' :
-                                streak < 30 ? 'You\'re on fire! 🎉' : 'Skincare champion! 🏆'}
+                        {streak === 0 ? 'Start your streak today' :
+                            streak < 7 ? 'Keep it up' :
+                                streak < 30 ? 'Great consistency' : 'Skincare champion'}
                     </Text>
                 </View>
             </View>

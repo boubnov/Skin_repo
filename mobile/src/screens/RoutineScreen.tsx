@@ -62,7 +62,7 @@ export default function RoutineScreen() {
         <View style={styles.header}>
             <View style={styles.streakContainer}>
                 <Text style={styles.streakNumber}>{routine?.streak || 0}</Text>
-                <Text style={styles.streakLabel}>Day Streak 🔥</Text>
+                <Text style={styles.streakLabel}>Day Streak</Text>
             </View>
             <Text style={styles.subHeader}>Consistency is key to clear skin.</Text>
         </View>

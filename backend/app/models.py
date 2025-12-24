@@ -36,10 +36,15 @@ class Profile(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    name = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
     ethnicity = Column(String, nullable=True)
     location = Column(String, nullable=True)
     skin_type = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    instagram = Column(String, nullable=True)
+    concerns = Column(JSON, nullable=True)  # List of skin concerns
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("User", back_populates="profile")
 
