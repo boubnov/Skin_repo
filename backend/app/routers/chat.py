@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from .. import database
 from ..agent import SkincareAgent
+import os
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -20,78 +21,88 @@ class ChatRequest(BaseModel):
 @router.post("/")
 def chat_endpoint(
     request: ChatRequest, 
-    x_goog_api_key: str = Header(..., alias="X-Goog-Api-Key"),
+    x_goog_api_key: str = Header(None, alias="X-Goog-Api-Key"),
     db: Session = Depends(database.get_db)
 ):
     """
     Chat endpoint for the Skincare Agent.
-    Requires 'X-Goog-Api-Key' header for BYOK (Bring Your Own Key).
+    Supports:
+    - Google Generative AI (X-Goog-Api-Key header)
+    - OpenAI-compatible APIs (OPENAI_API_KEY + OPENAI_BASE_URL env vars)
+    - Mock for testing (key starting with 'mock_')
     """
     try:
-        if not x_goog_api_key:
-            raise HTTPException(status_code=400, detail="Missing X-Goog-Api-Key header")
-            
-        # Factory: Choose LLM (Real vs Mock)
-        if x_goog_api_key.startswith("mock_"):
-            # Local Mock LLM for Integration Tests
-            class MockLLM:
-                def __init__(self, key):
-                    self.key = key
-
-                def bind_tools(self, tools):
-                    return self
-                
-                def invoke(self, messages):
-                    from langchain_core.messages import AIMessage
-                    # This mimics the first call (decision)
-                    input_text = messages[-1].content.lower()
-                    
-                    if "buy" in input_text or "find" in input_text or "want" in input_text:
-                        # Extract potential product name (very naive)
-                        # Assume last word or "eltamd"
-                        query = "skincare"
-                        if "eltamd" in input_text: query = "EltaMD"
-                        elif "cerave" in input_text: query = "CeraVe"
-                        
-                        return AIMessage(
-                            content="",
-                            tool_calls=[{
-                                "name": "product_retriever",
-                                "args": {"query": query},
-                                "id": "mock_call_rag"
-                            }]
-                        )
-                    return AIMessage(content="I can help you find products. Try saying 'I want EltaMD'.")
-
-                def stream(self, messages):
-                    # Mimics the second call (synthesis)
-                    from langchain_core.messages import AIMessageChunk
-                    
-                    # If the last message was a tool result (ToolMessage), we should use it!
-                    last_msg = messages[-1]
-                    if hasattr(last_msg, "tool_call_id"):
-                        # This means we just got data back from RAG
-                        import json
-                        try:
-                            products = json.loads(last_msg.content)
-                            if products:
-                                yield AIMessageChunk(content=f"I found {len(products)} products related to your search.")
-                                yield AIMessageChunk(content="", additional_kwargs={"products": products})
-                                return
-                        except:
-                            pass
-                            
-                    yield AIMessageChunk(content="I couldn't find any specific products in my database.")
-                            
-            llm = MockLLM(x_goog_api_key)
-        else:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-pro",
-                google_api_key=x_goog_api_key,
-                temperature=0, 
-                convert_system_message_to_human=True 
+        # Check for OpenAI-compatible API first (env vars)
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_base_url = os.getenv("OPENAI_BASE_URL")
+        openai_model = os.getenv("OPENAI_MODEL", "gemini_3_pro")
+        
+        if openai_api_key and openai_base_url:
+            # Use OpenAI-compatible endpoint (e.g., novo-genai marketplace)
+            from langchain_openai import ChatOpenAI
+            llm = ChatOpenAI(
+                model=openai_model,
+                api_key=openai_api_key,
+                base_url=openai_base_url,
+                temperature=0,
             )
+        elif x_goog_api_key:
+            if x_goog_api_key.startswith("mock_"):
+                # Local Mock LLM for Integration Tests
+                class MockLLM:
+                    def __init__(self, key):
+                        self.key = key
+
+                    def bind_tools(self, tools):
+                        return self
+                    
+                    def invoke(self, messages):
+                        from langchain_core.messages import AIMessage
+                        input_text = messages[-1].content.lower()
+                        
+                        if "buy" in input_text or "find" in input_text or "want" in input_text:
+                            query = "skincare"
+                            if "eltamd" in input_text: query = "EltaMD"
+                            elif "cerave" in input_text: query = "CeraVe"
+                            
+                            return AIMessage(
+                                content="",
+                                tool_calls=[{
+                                    "name": "product_retriever",
+                                    "args": {"query": query},
+                                    "id": "mock_call_rag"
+                                }]
+                            )
+                        return AIMessage(content="I can help you find products. Try saying 'I want EltaMD'.")
+
+                    def stream(self, messages):
+                        from langchain_core.messages import AIMessageChunk
+                        
+                        last_msg = messages[-1]
+                        if hasattr(last_msg, "tool_call_id"):
+                            import json
+                            try:
+                                products = json.loads(last_msg.content)
+                                if products:
+                                    yield AIMessageChunk(content=f"I found {len(products)} products related to your search.")
+                                    yield AIMessageChunk(content="", additional_kwargs={"products": products})
+                                    return
+                            except:
+                                pass
+                                
+                        yield AIMessageChunk(content="I couldn't find any specific products in my database.")
+                                
+                llm = MockLLM(x_goog_api_key)
+            else:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                llm = ChatGoogleGenerativeAI(
+                    model="gemini-pro",
+                    google_api_key=x_goog_api_key,
+                    temperature=0, 
+                    convert_system_message_to_human=True 
+                )
+        else:
+            raise HTTPException(status_code=400, detail="Missing API key. Provide X-Goog-Api-Key header or set OPENAI_API_KEY env var.")
 
         # Initialize Agent with Injected LLM
         agent = SkincareAgent(llm=llm, db_session=db)
@@ -103,5 +114,4 @@ def chat_endpoint(
         )
         
     except Exception as e:
-        # In prod, be careful not to leak stack traces
         raise HTTPException(status_code=500, detail=str(e))

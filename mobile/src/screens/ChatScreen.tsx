@@ -1,9 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, FlatList, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { View, Text, TextInput, StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
 import ChatBubble from '../components/ChatBubble';
 import { useChat } from '../hooks/useChat';
-import { COLORS, SPACING, RADIUS } from '../theme';
+import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme';
+
+// Professional quick prompts
+const QUICK_PROMPTS = [
+    "What products do you recommend for oily skin?",
+    "How should I treat acne scars?",
+    "Best SPF for sensitive skin?",
+    "Evening routine for anti-aging",
+];
 
 export default function ChatScreen({ navigation }: any) {
     const { messages, isLoading, apiKey, sendMessage, setMessages } = useChat();
@@ -11,53 +18,17 @@ export default function ChatScreen({ navigation }: any) {
     const flatListRef = useRef<FlatList>(null);
 
     const handleSend = () => {
+        if (!inputText.trim()) return;
         sendMessage(inputText);
         setInputText('');
     };
 
-    const handleChipPress = (chipText: string) => {
-        setInputText(chipText);
-        sendMessage(chipText);
+    const handlePromptPress = (prompt: string) => {
+        sendMessage(prompt);
     };
 
-    const handleCamera = async () => {
-        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-        if (permissionResult.granted === false) {
-            Alert.alert("Permission to access camera is required!");
-            return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ["images"],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 0.5,
-        });
-
-        if (!result.canceled) {
-            const uri = result.assets[0].uri;
-            // Send the photo immediately as a user message
-            sendMessage("Check my skin redness.", uri);
-
-            // Mock Analysis Response (simulating the backend processing the image)
-            setTimeout(() => {
-                const redness = Math.floor(Math.random() * 10) + 1;
-                const analysisText = `[Selfie Analysis] 📸\nBased on your photo, I detect a Redness Score of **${redness}/10**.\n\nI recommend using a soothing product like *Cicaplast* or *Aloe Vera*.`;
-
-                // Manually inject AI response since we aren't actually uploading to backend yet
-                setMessages((prev: any) => [...prev, {
-                    id: Date.now().toString(),
-                    role: 'model',
-                    content: analysisText
-                }]);
-            }, 2000);
-        }
-    };
-
-    if (!apiKey && !isLoading && messages.length === 0) {
-        // Simple empty state or loading until checkKey finishes
-        return <View style={styles.container} />;
-    }
+    // Show welcome state when no messages
+    const showWelcome = messages.length <= 1 && !isLoading;
 
     return (
         <KeyboardAvoidingView
@@ -66,59 +37,79 @@ export default function ChatScreen({ navigation }: any) {
             keyboardVerticalOffset={90}
             enabled={Platform.OS !== "web"}
         >
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContent}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                renderItem={({ item }) => <ChatBubble item={item} />}
-            />
+            {/* Messages or Welcome */}
+            {showWelcome ? (
+                <View style={styles.welcomeContainer}>
+                    <View style={styles.welcomeContent}>
+                        <Text style={styles.welcomeTitle}>AI Skin Consultant</Text>
+                        <Text style={styles.welcomeSubtitle}>
+                            Get personalized skincare advice, product recommendations, and answers to your skin concerns.
+                        </Text>
 
-            {isLoading && (
-                <View style={styles.loadingContainer}>
-                    <Text style={styles.loadingBubble}>typing • • •</Text>
+                        {/* Medical Disclaimer */}
+                        <View style={styles.disclaimerBox}>
+                            <Text style={styles.disclaimerText}>
+                                ⚠️ This is not medical advice. For serious skin conditions, consult a dermatologist.
+                            </Text>
+                        </View>
+
+                        <Text style={styles.promptsLabel}>Try asking about:</Text>
+                        <View style={styles.promptsGrid}>
+                            {QUICK_PROMPTS.map((prompt, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={styles.promptCard}
+                                    onPress={() => handlePromptPress(prompt)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={styles.promptText}>{prompt}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
                 </View>
-            )}
-
-            {!isLoading && messages.length === 1 && (
-                <View style={{ height: 50, marginBottom: 10 }}>
-                    <FlatList
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 15 }}
-                        data={[
-                            "Best moisturizer for oily skin",
-                            "Is Vitamin C safe for acne?",
-                            "Routine for dry winter skin",
-                            "Where to buy CeraVe?"
-                        ]}
-                        keyExtractor={item => item}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={styles.chip}
-                                onPress={() => handleChipPress(item)}
-                            >
-                                <Text style={styles.chipText}>{item}</Text>
-                            </TouchableOpacity>
-                        )}
-                    />
-                </View>
-            )}
-
-            <View style={styles.inputContainer}>
-                <TouchableOpacity onPress={handleCamera} style={{ marginRight: 10 }}>
-                    <Text style={{ fontSize: 24 }}>📷</Text>
-                </TouchableOpacity>
-                <TextInput
-                    style={styles.input}
-                    value={inputText}
-                    onChangeText={setInputText}
-                    placeholder="Ask about skincare..."
-                    editable={!isLoading}
-                    onSubmitEditing={handleSend}
+            ) : (
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.messagesContainer}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    renderItem={({ item }) => <ChatBubble item={item} />}
                 />
-                <Button title="Send" onPress={handleSend} disabled={isLoading || !inputText.trim()} />
+            )}
+
+            {/* Typing indicator */}
+            {isLoading && (
+                <View style={styles.typingContainer}>
+                    <View style={styles.typingBubble}>
+                        <ActivityIndicator size="small" color={COLORS.primary} />
+                        <Text style={styles.typingText}>Thinking...</Text>
+                    </View>
+                </View>
+            )}
+
+            {/* Input area */}
+            <View style={styles.inputArea}>
+                <View style={styles.inputWrapper}>
+                    <TextInput
+                        style={styles.input}
+                        value={inputText}
+                        onChangeText={setInputText}
+                        placeholder="Ask about skincare..."
+                        placeholderTextColor={COLORS.textLight}
+                        editable={!isLoading}
+                        onSubmitEditing={handleSend}
+                        multiline
+                    />
+                    <TouchableOpacity
+                        style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+                        onPress={handleSend}
+                        disabled={!inputText.trim() || isLoading}
+                    >
+                        <Text style={styles.sendButtonText}>Send</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </KeyboardAvoidingView>
     );
@@ -129,32 +120,110 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.background,
     },
-    listContent: {
-        padding: SPACING.m,
-        paddingBottom: SPACING.xl
-    },
-    loadingContainer: {
-        marginLeft: SPACING.l,
-        marginBottom: SPACING.s,
-    },
-    loadingBubble: {
-        color: COLORS.textLight,
-        fontSize: 12,
-        fontStyle: 'italic',
-        backgroundColor: COLORS.secondaryButton,
-        paddingVertical: 4,
-        paddingHorizontal: 12,
-        borderRadius: RADIUS.m,
-        overflow: 'hidden'
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        padding: SPACING.s,
-        backgroundColor: COLORS.card,
+
+    // Welcome state
+    welcomeContainer: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
+        padding: SPACING.xl,
+    },
+    welcomeContent: {
+        maxWidth: 500,
+        alignItems: 'center',
+    },
+    welcomeTitle: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: COLORS.text,
+        marginBottom: SPACING.s,
+        textAlign: 'center',
+    },
+    welcomeSubtitle: {
+        fontSize: 15,
+        color: COLORS.textLight,
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: SPACING.m,
+    },
+    disclaimerBox: {
+        backgroundColor: COLORS.warningBG,
+        borderRadius: RADIUS.m,
+        padding: SPACING.m,
+        marginBottom: SPACING.xl,
+        borderLeftWidth: 3,
+        borderLeftColor: COLORS.warning,
+    },
+    disclaimerText: {
+        fontSize: 13,
+        color: COLORS.text,
+        textAlign: 'center',
+        lineHeight: 18,
+    },
+    promptsLabel: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: COLORS.textLight,
+        marginBottom: SPACING.m,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    promptsGrid: {
+        width: '100%',
+    },
+    promptCard: {
+        backgroundColor: COLORS.card,
+        borderRadius: RADIUS.m,
+        padding: SPACING.m,
+        marginBottom: SPACING.s,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        ...SHADOWS.small,
+    },
+    promptText: {
+        fontSize: 14,
+        color: COLORS.text,
+    },
+
+    // Messages
+    messagesContainer: {
+        padding: SPACING.m,
+        paddingBottom: SPACING.xl,
+    },
+
+    // Typing indicator
+    typingContainer: {
+        paddingHorizontal: SPACING.m,
+        paddingBottom: SPACING.s,
+    },
+    typingBubble: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.card,
+        paddingVertical: SPACING.s,
+        paddingHorizontal: SPACING.m,
+        borderRadius: RADIUS.m,
+        alignSelf: 'flex-start',
+        ...SHADOWS.small,
+    },
+    typingText: {
+        marginLeft: SPACING.s,
+        fontSize: 13,
+        color: COLORS.textLight,
+    },
+
+    // Input area
+    inputArea: {
+        padding: SPACING.m,
+        paddingBottom: Platform.OS === 'ios' ? SPACING.xl : SPACING.m,
+        backgroundColor: COLORS.card,
         borderTopWidth: 1,
         borderTopColor: COLORS.border,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 10
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: SPACING.s,
     },
     input: {
         flex: 1,
@@ -162,24 +231,24 @@ const styles = StyleSheet.create({
         borderColor: COLORS.border,
         borderRadius: RADIUS.l,
         paddingHorizontal: SPACING.m,
-        paddingVertical: 10,
-        marginRight: SPACING.s,
-        fontSize: 16,
+        paddingVertical: 12,
+        fontSize: 15,
         backgroundColor: COLORS.background,
-        maxHeight: 100,
+        maxHeight: 120,
+        color: COLORS.text,
     },
-    chip: {
-        backgroundColor: COLORS.primaryBG, // Soft Mint
-        borderRadius: RADIUS.full,
-        paddingHorizontal: SPACING.m,
-        paddingVertical: 8,
-        marginRight: SPACING.s,
-        borderWidth: 1,
-        borderColor: COLORS.primaryLight
+    sendButton: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SPACING.l,
+        paddingVertical: 12,
+        borderRadius: RADIUS.l,
     },
-    chipText: {
-        color: COLORS.primary,
+    sendButtonDisabled: {
+        backgroundColor: COLORS.border,
+    },
+    sendButtonText: {
+        color: '#FFFFFF',
         fontWeight: '600',
-        fontSize: 13
-    }
+        fontSize: 15,
+    },
 });

@@ -9,7 +9,7 @@ export type Message = {
     role: 'user' | 'model';
     content: string;
     products?: any[];
-    image?: string; // New field for user photos
+    image?: string;
 };
 
 export const useChat = () => {
@@ -17,9 +17,10 @@ export const useChat = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [apiKey, setApiKey] = useState<string | null>(null);
     const [userLocation, setUserLocation] = useState<string | null>(null);
+    const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        checkKey();
+        initializeChat();
         requestLocation();
     }, []);
 
@@ -36,20 +37,24 @@ export const useChat = () => {
         return storage.getItem(key);
     };
 
-    const checkKey = async () => {
+    const initializeChat = async () => {
+        // Check for optional user API key (for backwards compatibility)
         const key = await getStorageItem('user_google_api_key');
         if (key) {
             setApiKey(key);
-            setMessages([{
-                id: 'welcome',
-                role: 'model',
-                content: "Hello! I am your Skincare Assistant. Ask me anything about products or ingredients."
-            }]);
         }
+
+        // Always set welcome message and mark as ready
+        setMessages([{
+            id: 'welcome',
+            role: 'model',
+            content: "Hello! I'm your AI Skin Consultant. Ask me anything about skincare products, routines, or ingredients."
+        }]);
+        setIsReady(true);
     };
 
     const sendMessage = async (text: string, image?: string) => {
-        if ((!text.trim() && !image) || !apiKey) return;
+        if (!text.trim() && !image) return;
 
         const userMsg: Message = {
             id: Date.now().toString(),
@@ -65,7 +70,7 @@ export const useChat = () => {
             const history = messages.map(m => ({ role: m.role, content: m.content }));
             const aiMsgId = (Date.now() + 1).toString();
 
-            // Initial AI Message
+            // Initial AI Message placeholder
             setMessages(prev => [...prev, {
                 id: aiMsgId,
                 role: 'model',
@@ -73,19 +78,35 @@ export const useChat = () => {
                 products: []
             }]);
 
+            // Build headers - API key is optional now (server may use env vars)
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+
+            const userToken = await getStorageItem('userToken');
+            if (userToken) {
+                headers['Authorization'] = `Bearer ${userToken}`;
+            }
+
+            // Only add X-Goog-Api-Key if user has set one (for BYOK)
+            if (apiKey) {
+                headers['X-Goog-Api-Key'] = apiKey;
+            }
+
             const response = await fetch(`${BASE_URL}/chat/`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${await getStorageItem('userToken')}`,
-                    'X-Goog-Api-Key': apiKey
-                },
+                headers: headers,
                 body: JSON.stringify({
                     message: userMsg.content,
                     history: history,
                     user_location: userLocation
                 })
             });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
 
             if (!response.body) throw new Error("No response body");
 
@@ -124,7 +145,12 @@ export const useChat = () => {
             }
         } catch (error: any) {
             console.error("Chat Error:", error);
-            Alert.alert("Error", "Failed to connect to the assistant.");
+            // Update the AI message with error
+            setMessages(prev => prev.map(m =>
+                m.role === 'model' && m.content === ''
+                    ? { ...m, content: "Sorry, I couldn't connect to the server. Please try again." }
+                    : m
+            ));
         } finally {
             setIsLoading(false);
         }
@@ -134,7 +160,8 @@ export const useChat = () => {
         messages,
         isLoading,
         apiKey,
+        isReady,
         sendMessage,
-        setMessages // Exposed for camera mock or other interactions
+        setMessages
     };
 };

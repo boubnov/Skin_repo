@@ -12,12 +12,12 @@ const getGreeting = () => {
     return { text: 'Good Evening', emoji: '🌙' };
 };
 
-// Action card data
+// Action card data - using warm neutral tones
 const QUICK_ACTIONS = [
-    { id: 'chat', title: 'AI Consultant', subtitle: 'Get personalized advice', icon: '💬', route: 'Chat', color: '#DBEAFE' },
-    { id: 'routine', title: 'Daily Routine', subtitle: 'Track your skincare', icon: '✅', route: 'Routine', color: '#D1FAE5' },
-    { id: 'history', title: 'Skin History', subtitle: 'View your progress', icon: '📊', route: 'HistoryTab', color: '#FEF3C7' },
-    { id: 'settings', title: 'Settings', subtitle: 'Manage your account', icon: '⚙️', route: 'SettingsTab', color: '#F3E8FF' },
+    { id: 'chat', title: 'AI Consultant', subtitle: 'Get personalized advice', icon: '💬', route: 'Chat', color: '#F5F0EB' },
+    { id: 'routine', title: 'Daily Routine', subtitle: 'Track your skincare', icon: '✅', route: 'Routine', color: '#F0F5F0' },
+    { id: 'history', title: 'Skin History', subtitle: 'View your progress', icon: '📊', route: 'HistoryTab', color: '#FDF8F0' },
+    { id: 'settings', title: 'Settings', subtitle: 'Manage your account', icon: '⚙️', route: 'SettingsTab', color: '#F0EBE5' },
 ];
 
 export default function HomeScreen({ navigation }: any) {

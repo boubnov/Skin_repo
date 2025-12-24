@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 
 type WebSidebarProps = {
     activeTab: string;
@@ -8,21 +8,24 @@ type WebSidebarProps = {
     onLogout: () => void;
 };
 
+// Clean, professional menu items - no emojis
 const MENU_ITEMS = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'routine', label: 'My Routine', icon: '✅' },
-    { id: 'chat', label: 'AI Consultant', icon: '💬' },
-    { id: 'history', label: 'Skin History', icon: '📜' },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'routine', label: 'My Routine' },
+    { id: 'chat', label: 'AI Consultant' },
+    { id: 'history', label: 'Skin History' },
 ];
 
 export const WebSidebar = ({ activeTab, onTabChange, onLogout }: WebSidebarProps) => {
     return (
         <View style={styles.container}>
+            {/* Clean text logo */}
             <View style={styles.header}>
-                <Text style={styles.logo}>🧴✨</Text>
-                <Text style={styles.appName}>Skincare AI</Text>
+                <Text style={styles.brandName}>Skincare</Text>
+                <Text style={styles.brandAccent}>AI</Text>
             </View>
 
+            {/* Navigation */}
             <View style={styles.menu}>
                 {MENU_ITEMS.map((item) => (
                     <TouchableOpacity
@@ -33,7 +36,8 @@ export const WebSidebar = ({ activeTab, onTabChange, onLogout }: WebSidebarProps
                         ]}
                         onPress={() => onTabChange(item.id)}
                     >
-                        <Text style={styles.icon}>{item.icon}</Text>
+                        {/* Active indicator bar */}
+                        {activeTab === item.id && <View style={styles.activeIndicator} />}
                         <Text style={[
                             styles.label,
                             activeTab === item.id && styles.activeLabel
@@ -44,37 +48,42 @@ export const WebSidebar = ({ activeTab, onTabChange, onLogout }: WebSidebarProps
                 ))}
             </View>
 
-            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-                <Text style={styles.logoutText}>Sign Out</Text>
-            </TouchableOpacity>
+            {/* Footer */}
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                    <Text style={styles.logoutText}>Sign Out</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        width: 250,
+        width: 220,
         height: '100%',
-        backgroundColor: '#0F172A', // Dark Slate for Sidebar
+        backgroundColor: '#3D3630', // Warm dark charcoal
         paddingVertical: SPACING.xl,
-        paddingHorizontal: SPACING.m,
-        justifyContent: 'space-between'
+        paddingHorizontal: 0,
+        justifyContent: 'flex-start',
     },
     header: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'baseline',
+        paddingHorizontal: SPACING.l,
         marginBottom: SPACING.xxl,
-        paddingHorizontal: SPACING.s
     },
-    logo: {
-        fontSize: 24,
-        marginRight: SPACING.s
+    brandName: {
+        fontSize: 22,
+        fontWeight: '300',
+        color: '#FFFFFF',
+        letterSpacing: 1,
     },
-    appName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#fff',
-        letterSpacing: 0.5
+    brandAccent: {
+        fontSize: 22,
+        fontWeight: '600',
+        color: COLORS.primaryLight,
+        marginLeft: 4,
     },
     menu: {
         flex: 1,
@@ -82,35 +91,45 @@ const styles = StyleSheet.create({
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: RADIUS.m,
-        marginBottom: SPACING.s,
+        paddingVertical: 14,
+        paddingHorizontal: SPACING.l,
+        position: 'relative',
     },
     activeMenuItem: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
-    icon: {
-        fontSize: 18,
-        marginRight: 12,
+    activeIndicator: {
+        position: 'absolute',
+        left: 0,
+        top: 8,
+        bottom: 8,
+        width: 3,
+        backgroundColor: COLORS.primaryLight,
+        borderTopRightRadius: 2,
+        borderBottomRightRadius: 2,
     },
     label: {
         fontSize: 15,
-        color: '#94A3B8', // Slate 400
-        fontWeight: '500'
+        color: '#9A9590', // Warm gray
+        fontWeight: '400',
+        letterSpacing: 0.3,
     },
     activeLabel: {
-        color: '#fff',
-        fontWeight: 'bold'
+        color: '#FFFFFF',
+        fontWeight: '500',
+    },
+    footer: {
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.08)',
+        paddingTop: SPACING.m,
+        paddingHorizontal: SPACING.l,
     },
     logoutButton: {
-        padding: SPACING.m,
-        borderTopWidth: 1,
-        borderTopColor: '#334155',
+        paddingVertical: SPACING.s,
     },
     logoutText: {
-        color: '#F87171', // Red 400
-        fontWeight: '600',
-        textAlign: 'center'
-    }
+        color: '#9A9590',
+        fontSize: 14,
+        fontWeight: '400',
+    },
 });

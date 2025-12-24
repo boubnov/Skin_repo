@@ -1,63 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { WebSidebar } from '../../components/WebSidebar';
-import { StatCard, Badge, ProgressBlock } from '../../components/GamificationComponents';
 import HomeScreen from '../HomeScreen';
 import RoutineScreen from '../RoutineScreen';
 import HistoryScreen from '../HistoryScreen';
 import ChatScreen from '../ChatScreen';
 import { useAuth } from '../../context/AuthContext';
-import { COLORS, SPACING, RADIUS, SHADOWS } from '../../theme';
+import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme';
 import { api } from '../../services/api';
+
+// Get time-based greeting
+const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+};
 
 export default function WebDashboardScreen() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const { logout } = useAuth();
     const [streak, setStreak] = useState(0);
 
-    // Fetch streak for gamification display
     useEffect(() => {
         api.get('/routine/').then(res => setStreak(res.data.streak)).catch(() => { });
     }, []);
 
     const renderDashboard = () => (
-        <ScrollView style={styles.dashboardScroll}>
-            {/* Header */}
-            <View style={styles.heroSection}>
-                <Text style={styles.greeting}>Good Evening, Skin Star! ✨</Text>
-                <Text style={styles.subGreeting}>You are on a {streak} day streak. Keep glowing!</Text>
+        <ScrollView style={styles.dashboardScroll} showsVerticalScrollIndicator={false}>
+            {/* Professional Header */}
+            <View style={styles.header}>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
+                <Text style={styles.subtitle}>
+                    {streak > 0
+                        ? `You've maintained your routine for ${streak} consecutive days.`
+                        : 'Start your skincare journey today.'
+                    }
+                </Text>
             </View>
 
-            {/* Stats Row */}
-            <View style={styles.statsRow}>
-                <StatCard label="Day Streak" value={streak} icon="🔥" color="#FEF3C7" />
-                <StatCard label="Skin XP" value={streak * 150} icon="⚡" color="#DBEAFE" />
-                <StatCard label="League" value="Silver" icon="🏆" color="#E0E7FF" />
-            </View>
-
+            {/* Main Content Grid */}
             <View style={styles.gridContainer}>
-                {/* Main Column: User's Actual Content */}
-                <View style={styles.mainCol}>
+                {/* Left Column: Routine */}
+                <View style={styles.leftColumn}>
                     <View style={styles.card}>
-                        <Text style={styles.cardTitle}>Today's Quest 🛡️</Text>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardTitle}>Today's Routine</Text>
+                            {streak > 0 && (
+                                <View style={styles.streakBadge}>
+                                    <Text style={styles.streakText}>{streak} day streak</Text>
+                                </View>
+                            )}
+                        </View>
                         <RoutineScreen />
                     </View>
                 </View>
 
-                {/* Side Column: Badges & Extras */}
-                <View style={styles.sideCol}>
-                    <View style={styles.card}>
-                        <Text style={styles.cardTitle}>Achievements 🏅</Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 10 }}>
-                            <Badge label="Early Bird" icon="🌅" />
-                            <Badge label="Hydrated" icon="💧" />
-                            <Badge label="Scholar" icon="📚" />
+                {/* Right Column: AI Consultant (Chat) */}
+                <View style={styles.rightColumn}>
+                    <View style={[styles.card, styles.chatCard]}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardTitle}>AI Skin Consultant</Text>
+                            <Text style={styles.cardSubtitle}>Get personalized advice</Text>
                         </View>
-                    </View>
-
-                    <View style={[styles.card, { flex: 1, minHeight: 300 }]}>
-                        <Text style={styles.cardTitle}>Quick Consult 💬</Text>
-                        <ChatScreen />
+                        <View style={styles.chatContainer}>
+                            <ChatScreen />
+                        </View>
                     </View>
                 </View>
             </View>
@@ -65,15 +73,12 @@ export default function WebDashboardScreen() {
     );
 
     const renderContent = () => {
-        // If Dashboard tab, show the special Gamified View
-        if (activeTab === 'dashboard') return renderDashboard();
-
-        // Otherwise show legacy full screens
         switch (activeTab) {
+            case 'dashboard': return renderDashboard();
             case 'routine': return <RoutineScreen />;
             case 'chat': return <ChatScreen />;
             case 'history': return <HistoryScreen />;
-            default: return <HomeScreen />;
+            default: return renderDashboard();
         }
     };
 
@@ -88,30 +93,95 @@ export default function WebDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, flexDirection: 'row', backgroundColor: '#F8FAFC' },
-    contentArea: { flex: 1, padding: 0 },
-
-    dashboardScroll: { flex: 1, padding: 32 },
-
-    heroSection: { marginBottom: 32 },
-    greeting: { fontSize: 32, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
-    subGreeting: { fontSize: 18, color: '#64748B' },
-
-    statsRow: { flexDirection: 'row', marginBottom: 32 },
-
-    gridContainer: { flexDirection: 'row', gap: 24, alignItems: 'flex-start' },
-    mainCol: { flex: 2 },
-    sideCol: { flex: 1, gap: 24 },
-
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 24,
-        padding: 24,
-        ...SHADOWS.small,
-        marginBottom: 24,
-        overflow: 'hidden'
+    container: {
+        flex: 1,
+        flexDirection: 'row',
+        backgroundColor: COLORS.background
     },
-    cardTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 16 }
+    contentArea: {
+        flex: 1,
+        padding: 0
+    },
+    dashboardScroll: {
+        flex: 1,
+        padding: SPACING.xl
+    },
+
+    // Header
+    header: {
+        marginBottom: SPACING.xl
+    },
+    greeting: {
+        fontSize: 28,
+        fontWeight: '300',
+        color: COLORS.text,
+        marginBottom: SPACING.xs,
+        letterSpacing: -0.5,
+    },
+    subtitle: {
+        fontSize: 15,
+        color: COLORS.textLight,
+        fontWeight: '400',
+    },
+
+    // Grid Layout
+    gridContainer: {
+        flexDirection: 'row',
+        gap: SPACING.l,
+    },
+    leftColumn: {
+        flex: 1,
+    },
+    rightColumn: {
+        flex: 1,
+    },
+
+    // Cards
+    card: {
+        backgroundColor: COLORS.card,
+        borderRadius: RADIUS.l,
+        padding: SPACING.l,
+        ...SHADOWS.medium,
+    },
+    chatCard: {
+        flex: 1,
+        minHeight: 500,
+    },
+    cardHeader: {
+        marginBottom: SPACING.m,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+    },
+    cardTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.text,
+        letterSpacing: 0.2,
+    },
+    cardSubtitle: {
+        fontSize: 13,
+        color: COLORS.textLight,
+        marginTop: 2,
+    },
+
+    // Streak Badge
+    streakBadge: {
+        backgroundColor: COLORS.primaryBG,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.s,
+        borderRadius: RADIUS.full,
+    },
+    streakText: {
+        fontSize: 12,
+        color: COLORS.primary,
+        fontWeight: '500',
+    },
+
+    // Chat Container
+    chatContainer: {
+        flex: 1,
+        minHeight: 400,
+    },
 });
-
-

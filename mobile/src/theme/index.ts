@@ -1,44 +1,47 @@
-export const COLORS = {
-    // Primary - Deep Teal
-    primary: '#0F766E',
-    primaryLight: '#2DD4BF', // For accents/highlights
-    primaryBG: '#F0FDFA', // Very light mint for backgrounds
+// Warm Neutral Palette (Aesop/Hims inspired)
+// Premium, gender-neutral, professional healthcare aesthetic
 
-    // Secondary - Soft Slate
-    secondaryButton: '#F1F5F9',
-    secondaryText: '#64748B',
+export const COLORS = {
+    // Primary - Warm Brown/Tan
+    primary: '#8B7355',
+    primaryLight: '#C4956A', // Copper accent
+    primaryBG: '#F5F0EB', // Warm cream background
+
+    // Secondary
+    secondaryButton: '#F0EBE5',
+    secondaryText: '#6B6560',
 
     // Status
-    success: '#10B981', // Emerald
-    successBG: '#ECFDF5',
-    error: '#F43F5E',   // Rose
-    errorBG: '#FFF1F2',
-    warning: '#F59E0B', // Amber
-    warningBG: '#FFFBEB',
+    success: '#6B8E6B', // Sage green
+    successBG: '#F0F5F0',
+    error: '#B85C5C',   // Muted red
+    errorBG: '#FDF5F5',
+    warning: '#C99A4D', // Warm amber
+    warningBG: '#FDF8F0',
 
     // Neutrals
-    background: '#F8FAFC', // Slate 50
+    background: '#FAF8F5', // Warm off-white
     card: '#FFFFFF',
-    text: '#1E293B',    // Slate 800
-    textLight: '#94A3B8', // Slate 400
-    border: '#E2E8F0',  // Slate 200
+    text: '#2D2D2D',    // Near black
+    textLight: '#8A8580', // Warm gray
+    border: '#E8E4DF',  // Warm light gray
 
     // Gradients (start, end)
-    gradientPrimary: ['#0F766E', '#2DD4BF'],
-    gradientWarm: ['#F59E0B', '#F97316'],
-    gradientCool: ['#6366F1', '#8B5CF6'],
+    gradientPrimary: ['#8B7355', '#C4956A'],
+    gradientWarm: ['#C4956A', '#D4A574'],
+    gradientCool: ['#6B8E6B', '#8BA88B'],
 };
 
 export const TYPOGRAPHY = {
     // Headlines
     h1: {
         fontSize: 32,
-        fontWeight: '800' as const,
+        fontWeight: '700' as const,
         letterSpacing: -0.5,
     },
     h2: {
         fontSize: 24,
-        fontWeight: '700' as const,
+        fontWeight: '600' as const,
         letterSpacing: -0.3,
     },
     h3: {
@@ -63,13 +66,13 @@ export const TYPOGRAPHY = {
     },
     // Special
     label: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '600' as const,
-        letterSpacing: 0.5,
+        letterSpacing: 1,
         textTransform: 'uppercase' as const,
     },
     button: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '600' as const,
         letterSpacing: 0.3,
     },
@@ -86,24 +89,24 @@ export const SPACING = {
 
 export const SHADOWS = {
     small: {
-        shadowColor: "#000",
+        shadowColor: "#2D2D2D",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
         elevation: 2,
     },
     medium: {
-        shadowColor: "#000",
+        shadowColor: "#2D2D2D",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
         elevation: 4,
     },
     large: {
-        shadowColor: "#000",
+        shadowColor: "#2D2D2D",
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
         elevation: 8,
     },
 };
