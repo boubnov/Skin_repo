@@ -11,12 +11,13 @@ type WebSidebarProps = {
 // Clean, professional menu items - no emojis
 const MENU_ITEMS = [
     { id: 'dashboard', label: 'Dashboard' },
+    { id: 'shelf', label: 'My Shelf' },
     { id: 'routine', label: 'My Routine' },
     { id: 'chat', label: 'AI Consultant' },
     { id: 'history', label: 'Skin History' },
 ];
 
-export const WebSidebar = ({ activeTab, onTabChange, onLogout }: WebSidebarProps) => {
+export const WebSidebar = ({ activeTab, onTabChange, onLogout, isLoggedIn = true, onLogin }: WebSidebarProps & { isLoggedIn?: boolean, onLogin?: () => void }) => {
     return (
         <View style={styles.container}>
             {/* Clean text logo */}
@@ -50,9 +51,15 @@ export const WebSidebar = ({ activeTab, onTabChange, onLogout }: WebSidebarProps
 
             {/* Footer */}
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-                    <Text style={styles.logoutText}>Sign Out</Text>
-                </TouchableOpacity>
+                {isLoggedIn ? (
+                    <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                        <Text style={styles.logoutText}>Sign Out</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity style={styles.logoutButton} onPress={onLogin}>
+                        <Text style={[styles.logoutText, { color: COLORS.primary }]}>Log In</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     );

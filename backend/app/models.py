@@ -27,9 +27,10 @@ class User(Base):
 
     profile = relationship("Profile", back_populates="user", uselist=False)
     history = relationship("SkinHistory", back_populates="user", uselist=False)
-    product_logs = relationship("UserProductLog", back_populates="user")
+    products = relationship("UserProduct", back_populates="user")
     routine_items = relationship("RoutineItem", back_populates="user")
     routine_logs = relationship("RoutineLog", back_populates="user")
+    journal_entries = relationship("JournalEntry", back_populates="user")
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -59,31 +60,47 @@ class SkinHistory(Base):
 
     user = relationship("User", back_populates="history")
 
-class UserProductLog(Base):
-    __tablename__ = "user_product_logs"
+class UserProduct(Base):
+    __tablename__ = "user_products"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_name = Column(String, index=True)
-    brand = Column(String, nullable=True) # Optional, helps matching
-    status = Column(String) # "safe", "unsafe", "wishlist"
-    notes = Column(Text, nullable=True) # "Caused breakout", "Loved it"
+    brand = Column(String, nullable=True)
+    status = Column(String) # "active", "empty", "archived" (formerly safe/unsafe, now used for shelf status mostly? Or keep safe/unsafe and add is_active?)
+    # Expert Note: For V2, let's keep status for "Safe/Unsafe" tracking, but add 'is_active' for Shelf visibility if needed.
+    # actually, purely renaming Log -> Product implies this IS the relationship.
+    # Let's keep fields flexible.
+    category = Column(String, nullable=True) # e.g. "Cleanser", "Serum"
+    notes = Column(Text, nullable=True)
     rating = Column(Integer, nullable=True)
-    log_date = Column(DateTime(timezone=True), server_default=func.now())
+    date_opened = Column(DateTime(timezone=True), nullable=True)
+    date_finished = Column(DateTime(timezone=True), nullable=True)
+    log_date = Column(DateTime(timezone=True), server_default=func.now()) # Keep for legacy/ordering
 
-    user = relationship("User", back_populates="product_logs")
+    user = relationship("User", back_populates="products")
+    routine_steps = relationship("RoutineItem", back_populates="user_product")
 
 class RoutineItem(Base):
     __tablename__ = "routine_items"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    name = Column(String)  # e.g. "Cleanser", "Retinol"
+    user_product_id = Column(Integer, ForeignKey("user_products.id"), nullable=True) # Link to specific inventory
+    
+    name = Column(String)  # Display name (Generic or overridden)
     period = Column(String) # "am", "pm"
     step_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
+    
+    # Frequency Logic (V2)
+    # frequency_type: "daily", "days_of_week", "interval"
+    frequency_type = Column(String, default="daily") 
+    # frequency_details: JSON e.g. [0, 2, 4] for Mon/Wed/Fri or {"every_n_days": 2}
+    frequency_details = Column(JSON, nullable=True)
 
     user = relationship("User", back_populates="routine_items")
+    user_product = relationship("UserProduct", back_populates="routine_steps")
 
 class RoutineLog(Base):
     __tablename__ = "routine_logs"
@@ -115,3 +132,17 @@ class Product(Base):
         embedding = Column(Text, nullable=True)  # Store as JSON string
         metadata_info = Column(JSON, nullable=True)  # Use generic JSON
         search_vector = Column(Text, nullable=True)  # Store keywords as text 
+
+class JournalEntry(Base):
+    __tablename__ = "journal_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    
+    overall_condition = Column(Integer) # Scale 1-5 (5 = Great)
+    notes = Column(Text, nullable=True)
+    photo_url = Column(String, nullable=True) # URL to photo (local or S3)
+    tags = Column(JSON, nullable=True) # e.g. ["breakout", "dryness"]
+    
+    user = relationship("User", back_populates="journal_entries")

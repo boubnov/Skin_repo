@@ -1,7 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 from app.database import engine, Base
-from app.routers import auth, chat, users, history, routine, profile
+from app.routers import auth, chat, users, history, routine, profile, user_products, journal
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +34,8 @@ app.include_router(users.router)
 app.include_router(history.router)
 app.include_router(routine.router)
 app.include_router(profile.router)
+app.include_router(user_products.router)
+app.include_router(journal.router)
 
 @app.get("/")
 def read_root():

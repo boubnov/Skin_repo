@@ -1,16 +1,19 @@
 """Tests for chat endpoints."""
 import pytest
+from unittest.mock import patch
+import os
 
 
 # Mock Response for Gemini
 MOCK_GEMINI_RESPONSE = "I recommend CeraVe Moisturizing Cream."
 
 
+@patch.dict(os.environ, {"OPENAI_API_KEY": ""}, clear=True)
 def test_chat_endpoint_missing_header(client):
     """Test that chat endpoint requires X-Goog-Api-Key header."""
     response = client.post("/chat/", json={"message": "Hello"})
     # Should fail because X-Goog-Api-Key is missing
-    assert response.status_code == 422  # Pydantic/FastAPI validation error for missing Header
+    assert response.status_code == 400  # Manual check returns 400, not 422 (since field is optional in schema)
 
 
 def test_chat_endpoint_success_mocked(client):

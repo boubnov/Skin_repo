@@ -23,11 +23,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def verify_google_token(token: str):
     # DEV BYPASS: Allow mock tokens for local testing
     if token.startswith("mock_"):
+        suffix = token.replace("mock_", "")
         return {
-            "email": "mock_user@example.com",
-            "sub": "mock_social_id_123",
+            "email": f"mock_user_{suffix}@example.com",
+            "sub": f"mock_social_id_{suffix}",
             "iss": "https://accounts.google.com",
-            "name": "Mock User",
+            "name": f"Mock User {suffix}",
             "picture": "https://example.com/avatar.jpg"
         }
     try:

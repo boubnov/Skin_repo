@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import WebDashboardScreen from '../web/WebDashboardScreen';
 
 // Mock child screens to simplify testing
@@ -20,7 +21,8 @@ jest.mock('../../services/api', () => ({
 jest.mock('../../context/AuthContext', () => ({
     useAuth: () => ({
         logout: jest.fn(),
-        isAuthenticated: true,
+        userToken: 'dummy-token', // Fix: Component checks !!userToken
+        isLoading: false,
     }),
 }));
 
@@ -47,14 +49,22 @@ describe('WebDashboardScreen', () => {
     });
 
     it('renders without crashing', async () => {
-        const { UNSAFE_root } = render(<WebDashboardScreen />);
+        const { UNSAFE_root } = render(
+            <NavigationContainer>
+                <WebDashboardScreen />
+            </NavigationContainer>
+        );
         expect(UNSAFE_root).toBeTruthy();
     });
 
     it('fetches streak data on mount', async () => {
         const { api } = require('../../services/api');
 
-        render(<WebDashboardScreen />);
+        render(
+            <NavigationContainer>
+                <WebDashboardScreen />
+            </NavigationContainer>
+        );
 
         await waitFor(() => {
             expect(api.get).toHaveBeenCalledWith('/routine/');
@@ -62,15 +72,32 @@ describe('WebDashboardScreen', () => {
     });
 
     it('displays greeting text', async () => {
-        const { findByText } = render(<WebDashboardScreen />);
+        const { findByText } = render(
+            <NavigationContainer>
+                <WebDashboardScreen />
+            </NavigationContainer>
+        );
 
         // Dashboard shows greeting on initial render
-        const greeting = await findByText(/Good Evening, Skin Star!/);
+        // Note: The greeting logic relies on time of day. Testing "Good Evening" specifically might be flaky if test runs in morning.
+        // It's safer to just check for "Good" or mock Date. 
+        // For now, let's assume it renders *something*
+        // But the original test looked for "Good Evening, Skin Star!", let's see current impl.
+        // Current impl: getGreeting() -> "Good morning" / "Good afternoon" / "Good evening"
+        // And subtitle. 
+        // It doesn't show "Skin Star" in the code I read earlier. It shows "Good morning" etc.
+        // Let's broaden the matcher or mock Date? 
+        // Actually, let's just use a regex for "Good"
+        const greeting = await findByText(/Good (morning|afternoon|evening)/);
         expect(greeting).toBeTruthy();
     });
 
     it('displays streak information', async () => {
-        const { findByText } = render(<WebDashboardScreen />);
+        const { findByText } = render(
+            <NavigationContainer>
+                <WebDashboardScreen />
+            </NavigationContainer>
+        );
 
         // Wait for streak to be fetched and displayed
         await waitFor(async () => {

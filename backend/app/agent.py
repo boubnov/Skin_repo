@@ -4,6 +4,7 @@ from langchain_core.tools import tool
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from . import rag
+from . import models
 import json
 from .tools.store_locator import store_locator
 
@@ -71,21 +72,89 @@ class SkincareAgent:
         self.llm = llm
         self.llm_with_tools = self.llm.bind_tools(self.tools)
 
-    def run_stream(self, user_message: str, chat_history: List[Dict] = [], user_location: str = None, image_base64: str = None):
+
+    def build_system_context(self, user_id: int) -> str:
+        """
+        Constructs a Just-in-Time System Prompt tailored to the user's data.
+        """
+        # 1. Fetch Profile
+        user = self.db.query(models.User).filter(models.User.id == user_id).first()
+        profile_text = "Unknown"
+        if user and user.profile:
+            p = user.profile
+            profile_text = f"Name: {p.name or 'User'}\nSkin Type: {p.skin_type or 'Unknown'}\nConcerns: {p.concerns or 'None'}"
+        
+        # 2. Fetch Shelf (Active Products)
+        products = self.db.query(models.UserProduct).filter(
+            models.UserProduct.user_id == user_id,
+            models.UserProduct.status == 'active'
+        ).all()
+        
+        shelf_text = "No active products."
+        if products:
+            shelf_text = "\n".join([f"- {p.product_name} ({p.brand or 'Generic'}) [Category: {p.category or 'N/A'}]" for p in products])
+            
+        # 3. Fetch Journal (Last 5 Entries)
+        entries = self.db.query(models.JournalEntry).filter(
+            models.JournalEntry.user_id == user_id
+        ).order_by(models.JournalEntry.date.desc()).limit(5).all()
+        
+        journal_text = "No recent logs."
+        if entries:
+            journal_text = "\n".join([f"- {e.date.date()}: Condition {e.overall_condition}/5. Notes: {e.notes or 'None'}" for e in entries])
+
+        # 4. Construct XML System Prompt
+        # Using Anthropic-style XML tags for clarity
+        system_prompt = f"""
+<role>
+You are a highly personalized Dermatology Consultant. You have access to the user's real-time inventory and skin history.
+Your goal is to provide advice that is GROUNDED in their actual situation.
+</role>
+
+<user_profile>
+{profile_text}
+</user_profile>
+
+<inventory>
+The user currently owns and uses:
+{shelf_text}
+</inventory>
+
+<skin_history>
+Recent skin journal entries:
+{journal_text}
+</skin_history>
+
+<instructions>
+1. USE THEIR PRODUCTS: If suggesting a routine, prioritize products they already own (listed in <inventory>). Only suggest new products if they are missing a core step (e.g. have no sunscreen).
+2. CHECK HISTORY: If they rated their skin poorly (1-3) recently, ask follow-up questions about that specific day/event.
+3. BE SPECIFIC: Don't say "use a moisturizer". Say "use your CeraVe Moisturizing Cream".
+4. SAFETY: Always check ingredients if they mention allergies.
+5. TOOLS: Use 'product_retriever' if you need to find *new* products to recommend. Use 'store_locator' if they ask where to buy.
+</instructions>
+"""
+        return system_prompt
+
+    def run_stream(self, user_message: str, chat_history: List[Dict] = [], user_location: str = None, image_base64: str = None, user_id: int = None):
         """
         Runs the agent loop and YIELDS chunks of the final text.
         Structure of yield:
         { "type": "text", "content": "..." }
         { "type": "products", "content": [...] }
         """
-        system_text = "You are a helpful, safety-conscious Dermatology Assistant. Use 'product_retriever' to find products. Use 'store_locator' if the user asks where to buy something. ALWAYS check for allergies. Be concise."
+        
+        # DYNAMIC CONTEXT BUILDING
+        if user_id:
+            system_text = self.build_system_context(user_id)
+        else:
+            system_text = "You are a helpful skin assistant."
         
         # Add image analysis instructions if image is provided
         if image_base64:
-            system_text += " The user has provided an image for skin analysis. Carefully examine the image and provide relevant skincare advice based on what you observe."
+            system_text += "\n<image_context>The user provided an image. Analyze it for skin conditions.</image_context>"
         
         if user_location:
-            system_text += f" User Location: {user_location}. Use this for store_locator queries."
+            system_text += f"\n<location>{user_location}</location>"
             
         messages = [
             SystemMessage(content=system_text)

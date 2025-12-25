@@ -29,7 +29,10 @@ def get_history(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
-    return current_user.product_logs
+    # Backward compatibility: Map UserProduct to ProductLogResponse
+    # Since we renamed the model, 'current_user.product_logs' doesn't exist.
+    # We use 'current_user.products'.
+    return current_user.products
 
 @router.post("/", response_model=ProductLogResponse)
 def add_log(
@@ -37,9 +40,13 @@ def add_log(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
-    # Check if duplicate product for user, maybe just append? MVP: Just append.
-    db_log = models.UserProductLog(
-        **log.dict(),
+    # Map old Create schema to new Model
+    db_log = models.UserProduct(
+        product_name=log.product_name,
+        brand=log.brand,
+        status=log.status,
+        notes=log.notes,
+        rating=log.rating,
         user_id=current_user.id
     )
     db.add(db_log)

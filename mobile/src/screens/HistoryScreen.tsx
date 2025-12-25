@@ -1,147 +1,191 @@
 import React, { useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, FlatList, TouchableOpacity,
-    Modal, TextInput, Alert, ActivityIndicator
+    Modal, TextInput, Alert, ActivityIndicator, Image, Platform
 } from 'react-native';
 import { api } from '../services/api';
-import { COLORS, SPACING, SHADOWS, RADIUS } from '../theme';
+import { COLORS, SPACING, SHADOWS, RADIUS, TYPOGRAPHY } from '../theme';
 
-type ProductLog = {
+type JournalEntry = {
     id: number;
-    product_name: string;
-    brand?: string;
-    status: 'safe' | 'unsafe' | 'wishlist';
+    date: string; // ISO String
+    overall_condition: number;
     notes?: string;
-    rating?: number;
+    photo_url?: string;
+    tags?: string[];
 };
 
 export default function HistoryScreen() {
-    const [activeTab, setActiveTab] = useState<'safe' | 'unsafe'>('safe');
-    const [logs, setLogs] = useState<ProductLog[]>([]);
+    const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
 
-    // Form State
-    const [name, setName] = useState('');
-    const [brand, setBrand] = useState('');
+    // Check-in State
+    const [condition, setCondition] = useState(3);
     const [notes, setNotes] = useState('');
 
     useEffect(() => {
-        fetchLogs();
+        fetchJournal();
     }, []);
 
-    const fetchLogs = async () => {
+    const fetchJournal = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/history/'); // Trailing slash is important
-            setLogs(res.data);
+            const res = await api.get('/journal/');
+            setEntries(res.data);
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Failed to fetch history.");
+            // Alert.alert("Error", "Failed to load journal");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleAdd = async () => {
-        if (!name) return Alert.alert("Validation", "Product Name is required");
-
+    const handleCheckIn = async () => {
         try {
             const payload = {
-                product_name: name,
-                brand: brand || undefined,
-                status: activeTab, // Add to currently viewed list
-                notes: notes || undefined
+                overall_condition: condition,
+                notes: notes,
+                tags: [] // Future: Add tags UI
             };
-            await api.post('/history/', payload);
+            await api.post('/journal/', payload);
             setModalVisible(false);
-            setName(''); setBrand(''); setNotes('');
-            fetchLogs(); // Refresh
+            setNotes(''); setCondition(3);
+            fetchJournal();
         } catch (error) {
-            Alert.alert("Error", "Failed to add product.");
+            Alert.alert("Error", "Failed to save check-in");
         }
     };
 
-    // Filter logs for display
-    const filteredLogs = logs.filter(l => l.status === activeTab);
+    const handleDelete = async (id: number) => {
+        Alert.alert("Delete Entry", "Are you sure?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "Delete",
+                style: "destructive",
+                onPress: async () => {
+                    await api.delete(`/journal/${id}`);
+                    fetchJournal();
+                }
+            }
+        ]);
+    };
 
-    const renderItem = ({ item }: { item: ProductLog }) => (
-        <View style={[styles.card, { borderLeftWidth: 4, borderLeftColor: item.status === 'safe' ? COLORS.success : COLORS.error }]}>
-            <Text style={styles.cardTitle}>{item.product_name}</Text>
-            {item.brand && <Text style={styles.cardSubtitle}>{item.brand}</Text>}
-            {item.notes && <Text style={styles.cardNotes}>"{item.notes}"</Text>}
-        </View>
-    );
+    const getConditionLabel = (val: number) => {
+        switch (val) {
+            case 1: return "Poor";
+            case 2: return "Fair";
+            case 3: return "Okay";
+            case 4: return "Good";
+            case 5: return "Excellent";
+            default: return "—";
+        }
+    };
+
+    const renderItem = ({ item }: { item: JournalEntry }) => {
+        const dateObj = new Date(item.date);
+        const day = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        const time = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        return (
+            <View style={styles.timelineItem}>
+                {/* Date Spine */}
+                <View style={styles.dateCol}>
+                    <Text style={styles.dateText}>{day}</Text>
+                    <Text style={styles.timeText}>{time}</Text>
+                    <View style={styles.line} />
+                </View>
+
+                {/* Content Card */}
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <View style={styles.conditionBadge}>
+                            <Text style={styles.conditionText}>{getConditionLabel(item.overall_condition)}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                            <Text style={styles.deleteText}>×</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {item.notes ? (
+                        <Text style={styles.notesText}>{item.notes}</Text>
+                    ) : (
+                        <Text style={styles.emptyNotes}>No notes added.</Text>
+                    )}
+
+                    {/* Placeholder for Photo if we add it later */}
+                </View>
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container}>
-            {/* Header Tabs */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'safe' && styles.activeTabSafe]}
-                    onPress={() => setActiveTab('safe')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'safe' && styles.activeTabText]}>Safe List 🟢</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'unsafe' && styles.activeTabUnsafe]}
-                    onPress={() => setActiveTab('unsafe')}
-                >
-                    <Text style={[styles.tabText, activeTab === 'unsafe' && styles.activeTabText]}>Blacklist 🔴</Text>
-                </TouchableOpacity>
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Skin Journal</Text>
+                <Text style={styles.headerSubtitle}>Track progress over time.</Text>
             </View>
 
-            {/* List */}
             {loading ? (
-                <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+                <View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View>
             ) : (
                 <FlatList
-                    data={filteredLogs}
-                    keyExtractor={item => item.id.toString()}
+                    data={entries}
+                    keyExtractor={i => i.id.toString()}
                     renderItem={renderItem}
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
-                        <Text style={styles.emptyText}>No products in this list yet.</Text>
+                        <View style={styles.center}>
+                            <Text style={styles.emptyText}>No check-ins yet.</Text>
+                            <Text style={styles.emptySubText}>Tap + to log your skin today.</Text>
+                        </View>
                     }
                 />
             )}
 
-            {/* Floating Action Button */}
+            {/* FAB */}
             <TouchableOpacity
-                style={[styles.fab, { backgroundColor: activeTab === 'safe' ? COLORS.success : COLORS.error }]}
+                style={styles.fab}
                 onPress={() => setModalVisible(true)}
             >
                 <Text style={styles.fabText}>+</Text>
             </TouchableOpacity>
 
-            {/* Add Modal */}
+            {/* Check-in Modal */}
             <Modal visible={modalVisible} animationType="slide" transparent>
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Add to {activeTab === 'safe' ? 'Safe List' : 'Blacklist'}</Text>
+                        <Text style={styles.modalTitle}>Daily Check-In</Text>
 
+                        <Text style={styles.label}>How is your skin today?</Text>
+                        <View style={styles.ratingRow}>
+                            {[1, 2, 3, 4, 5].map(v => (
+                                <TouchableOpacity
+                                    key={v}
+                                    style={[styles.ratingBtn, condition === v && styles.ratingBtnActive]}
+                                    onPress={() => setCondition(v)}
+                                >
+                                    <Text style={[styles.ratingText, condition === v && styles.ratingTextActive]}>{v}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                        <Text style={styles.ratingLabelCenter}>{getConditionLabel(condition)}</Text>
+
+                        <Text style={styles.label}>Notes</Text>
                         <TextInput
-                            placeholder="Product Name (e.g. CeraVe)"
-                            style={styles.input}
-                            value={name} onChangeText={setName}
-                        />
-                        <TextInput
-                            placeholder="Brand (Optional)"
-                            style={styles.input}
-                            value={brand} onChangeText={setBrand}
-                        />
-                        <TextInput
-                            placeholder="Notes (e.g. Caused redness)"
-                            style={styles.input}
+                            style={styles.textArea}
+                            placeholder="Details (e.g. Broke out after pizza...)"
+                            multiline
+                            numberOfLines={3}
                             value={notes} onChangeText={setNotes}
                         />
 
-                        <View style={styles.modalButtons}>
+                        <View style={styles.modalActions}>
                             <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.cancelButton}>
-                                <Text>Cancel</Text>
+                                <Text style={styles.cancelText}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={handleAdd} style={styles.saveButton}>
-                                <Text style={styles.saveButtonText}>Save</Text>
+                            <TouchableOpacity onPress={handleCheckIn} style={styles.saveButton}>
+                                <Text style={styles.saveText}>Save Entry</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -153,62 +197,64 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-    // Tabs (Segmented Control)
-    tabContainer: {
-        flexDirection: 'row',
-        paddingHorizontal: SPACING.m,
-        marginTop: SPACING.m,
-        marginBottom: SPACING.m
-    },
-    tab: {
-        flex: 1,
-        paddingVertical: 12,
-        alignItems: 'center',
-        borderRadius: RADIUS.l,
-        backgroundColor: COLORS.border, // Inactive
-        marginHorizontal: 4
-    },
-    activeTabSafe: { backgroundColor: COLORS.success }, // Solid Color
-    activeTabUnsafe: { backgroundColor: COLORS.error }, // Solid Color
+    header: { padding: SPACING.l, paddingTop: SPACING.xl, backgroundColor: COLORS.card },
+    headerTitle: { ...TYPOGRAPHY.h1, color: COLORS.text, marginBottom: 4 },
+    headerSubtitle: { ...TYPOGRAPHY.body, color: COLORS.textLight },
 
-    tabText: { fontWeight: '600', color: COLORS.textLight },
-    activeTabText: { color: '#fff', fontWeight: 'bold' }, // White text on solid color
+    list: { padding: SPACING.m, paddingBottom: 100 },
 
-    list: { paddingHorizontal: SPACING.m },
-    card: {
-        backgroundColor: COLORS.card,
-        padding: SPACING.m,
-        marginBottom: SPACING.s,
-        borderRadius: RADIUS.m,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        ...SHADOWS.small
-    },
-    cardTitle: { fontSize: 16, fontWeight: 'bold', color: COLORS.text },
-    cardSubtitle: { color: COLORS.textLight, fontSize: 14, marginBottom: 4 },
-    cardNotes: { marginTop: 4, fontStyle: 'italic', color: COLORS.secondaryText, fontSize: 13 },
+    timelineItem: { flexDirection: 'row', marginBottom: SPACING.l },
+    dateCol: { width: 60, alignItems: 'center', marginRight: SPACING.s },
+    dateText: { fontWeight: 'bold', color: COLORS.text, fontSize: 13 },
+    timeText: { color: COLORS.textLight, fontSize: 11 },
+    line: { width: 2, flex: 1, backgroundColor: COLORS.border, marginTop: 4 },
 
-    emptyText: { textAlign: 'center', color: COLORS.textLight, marginTop: 40 },
+    card: { flex: 1, backgroundColor: COLORS.card, borderRadius: RADIUS.m, padding: SPACING.m, ...SHADOWS.small },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    conditionBadge: { backgroundColor: COLORS.primaryBG, borderRadius: RADIUS.s, paddingHorizontal: 8, paddingVertical: 2 },
+    conditionText: { color: COLORS.primary, fontWeight: '600', fontSize: 12 },
+    deleteText: { color: COLORS.textLight, fontSize: 18, marginTop: -4 },
+    notesText: { ...TYPOGRAPHY.body, color: COLORS.text },
+    emptyNotes: { ...TYPOGRAPHY.body, color: COLORS.textLight, fontStyle: 'italic' },
 
-    // FAB
     fab: {
-        position: 'absolute', bottom: 30, right: 30, width: 56, height: 56,
-        borderRadius: RADIUS.full, justifyContent: 'center', alignItems: 'center',
-        ...SHADOWS.medium
+        position: 'absolute', bottom: 30, right: 30,
+        width: 60, height: 60, borderRadius: 30,
+        backgroundColor: COLORS.primary,
+        justifyContent: 'center', alignItems: 'center', ...SHADOWS.medium
     },
-    fabText: { color: '#fff', fontSize: 30, lineHeight: 30 },
+    fabText: { color: '#fff', fontSize: 32, marginTop: -2 },
 
-    // Modal (Keep roughly same, just updated colors)
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 20 },
-    modalContent: { backgroundColor: COLORS.card, padding: 24, borderRadius: RADIUS.l, ...SHADOWS.medium },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: COLORS.text },
-    input: {
-        borderWidth: 1, borderColor: COLORS.border, padding: 12,
-        borderRadius: RADIUS.s, marginBottom: 12, backgroundColor: COLORS.background
+    emptyText: { ...TYPOGRAPHY.h3, color: COLORS.textLight, marginBottom: 8 },
+    emptySubText: { ...TYPOGRAPHY.body, color: COLORS.secondaryText },
+
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: SPACING.l },
+    modalContent: { backgroundColor: COLORS.card, borderRadius: RADIUS.l, padding: SPACING.l, ...SHADOWS.large },
+    modalTitle: { ...TYPOGRAPHY.h2, textAlign: 'center', marginBottom: SPACING.l },
+    label: { ...TYPOGRAPHY.label, color: COLORS.textLight, marginBottom: 8 },
+
+    ratingRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    ratingBtn: {
+        width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border,
+        justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background
     },
-    modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-    cancelButton: { padding: 12 },
-    saveButton: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADIUS.s },
-    saveButtonText: { color: '#fff', fontWeight: 'bold' }
+    ratingBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+    ratingText: { fontWeight: 'bold', color: COLORS.text },
+    ratingTextActive: { color: '#fff' },
+    ratingLabelCenter: { textAlign: 'center', color: COLORS.primary, fontWeight: '600', marginBottom: SPACING.l },
+
+    textArea: {
+        backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border,
+        borderRadius: RADIUS.m, padding: SPACING.m, height: 80, marginBottom: SPACING.l
+    },
+    modalActions: { flexDirection: 'row', justifyContent: 'space-between' },
+    cancelButton: { padding: SPACING.m },
+    cancelText: { color: COLORS.textLight, fontWeight: '600' },
+    saveButton: {
+        backgroundColor: COLORS.primary, paddingVertical: SPACING.m, paddingHorizontal: SPACING.l,
+        borderRadius: RADIUS.m
+    },
+    saveText: { color: '#fff', fontWeight: 'bold' }
 });

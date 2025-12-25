@@ -2,87 +2,42 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { useWindowDimensions, Platform, ActivityIndicator, View } from 'react-native';
+import { useWindowDimensions, Platform, ActivityIndicator, View, Text } from 'react-native';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+
 import LoginScreen from './src/screens/LoginScreen';
-import HomeScreen from './src/screens/HomeScreen';
+// import HomeScreen from './src/screens/HomeScreen';
 import ProfileSetupScreen from './src/screens/ProfileSetupScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
-import WebDashboardScreen from './src/screens/web/WebDashboardScreen';
+// import SettingsScreen from './src/screens/SettingsScreen';
+import WebDashboardScreen from './src/screens/web/DashboardScreen'; // RENAMED & RESTORED
 
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HistoryScreen from './src/screens/HistoryScreen';
 import RoutineScreen from './src/screens/RoutineScreen';
+import ShelfScreen from './src/screens/ShelfScreen';
 import { COLORS, SHADOWS } from './src/theme';
 import { ResponsiveContainer } from './src/components/ResponsiveContainer';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+// const Tab = createBottomTabNavigator();
 
+/*
 function MainTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: () => null, // Just text for MVP
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textLight,
-        tabBarLabelStyle: {
-          fontSize: 12,
-          marginBottom: 15,
-          fontWeight: '600'
-        },
-        tabBarStyle: {
-          height: 60,
-          borderTopWidth: 0, // Clean look
-          ...SHADOWS.medium, // Floating feel
-          backgroundColor: COLORS.card,
-        },
-        headerStyle: {
-          backgroundColor: COLORS.card,
-          shadowColor: 'transparent', // Remove header shadow for clean look
-          borderBottomWidth: 1,
-          borderBottomColor: COLORS.border,
-        },
-        headerTitleStyle: {
-          color: COLORS.primary,
-          fontWeight: 'bold',
-        }
-      })}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: 'Home', tabBarLabel: '🏠 Home' }}
-      />
-      <Tab.Screen
-        name="Routine"
-        component={RoutineScreen}
-        options={{ title: 'Routine', tabBarLabel: '✅ Routine' }}
-      />
-      <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
-        options={{ headerShown: false, tabBarLabel: '💬 Chat' }}
-      />
-      <Tab.Screen
-        name="HistoryTab"
-        component={HistoryScreen}
-        options={{ title: 'Skin History', tabBarLabel: '📜 History' }}
-      />
-      <Tab.Screen
-        name="SettingsTab"
-        component={SettingsScreen}
-        options={{ title: 'Settings', tabBarLabel: '⚙️ Settings' }}
-      />
+    <Tab.Navigator ... >
+      ...
     </Tab.Navigator>
   );
 }
+*/
 
 function AppNavigator() {
   const { userToken, isLoading, hasProfile } = useAuth();
   const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === 'web' && width > 768;
+  // FORCE DESKTOP MODE for debugging
+  const isDesktop = true; // Platform.OS === 'web' && width > 768;
 
   if (isLoading) {
     return (
@@ -92,50 +47,24 @@ function AppNavigator() {
     );
   }
 
-  // 1. Not Logged In -> Login Screen
-  if (userToken == null) {
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    );
-  }
-
-  // 2. Logged In but No Profile -> Profile Setup
-  if (!hasProfile) {
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    );
-  }
-
-  // 3. Logged In + Profile + Desktop -> WEB DASHBOARD
-  if (isDesktop) {
-    return (
-      <Stack.Navigator>
-        <Stack.Screen name="WebDashboard" component={WebDashboardScreen} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    );
-  }
-
-  // 4. Logged In + Profile + Mobile -> MOBILE TABS
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="WebDashboard" component={WebDashboardScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <AuthProvider>
-        <ResponsiveContainer>
-          <AppNavigator />
-        </ResponsiveContainer>
-      </AuthProvider>
-    </NavigationContainer>
+    <ErrorBoundary>
+      <NavigationContainer>
+        <AuthProvider>
+          <ResponsiveContainer>
+            <AppNavigator />
+          </ResponsiveContainer>
+        </AuthProvider>
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 }

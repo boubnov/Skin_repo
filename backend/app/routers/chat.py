@@ -19,10 +19,14 @@ class ChatRequest(BaseModel):
     user_location: Optional[str] = None
     image_base64: Optional[str] = None  # Base64 encoded image for vision analysis
 
+from ..dependencies import get_current_user
+from .. import models
+
 @router.post("/")
 def chat_endpoint(
     request: ChatRequest, 
     x_goog_api_key: str = Header(None, alias="X-Goog-Api-Key"),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
     """
@@ -58,8 +62,15 @@ def chat_endpoint(
                         return self
                     
                     def invoke(self, messages):
-                        from langchain_core.messages import AIMessage
+                        from langchain_core.messages import AIMessage, SystemMessage
                         input_text = messages[-1].content.lower()
+                        
+                        # DEBUG HOOK: Return System Prompt Content for Verification
+                        if "context_check" in input_text:
+                            system_content = "No System Message Found"
+                            if isinstance(messages[0], SystemMessage):
+                                system_content = messages[0].content
+                            return AIMessage(content=f"DEBUG_CONTEXT:{system_content}")
                         
                         if "buy" in input_text or "find" in input_text or "want" in input_text:
                             query = "skincare"
@@ -77,9 +88,19 @@ def chat_endpoint(
                         return AIMessage(content="I can help you find products. Try saying 'I want EltaMD'.")
 
                     def stream(self, messages):
-                        from langchain_core.messages import AIMessageChunk
+                        from langchain_core.messages import AIMessageChunk, SystemMessage
                         
                         last_msg = messages[-1]
+                        input_text = last_msg.content.lower()
+                        
+                        # DEBUG HOOK STREAMING
+                        if "context_check" in input_text:
+                             system_content = "No System Message Found"
+                             if isinstance(messages[0], SystemMessage):
+                                system_content = messages[0].content
+                             yield AIMessageChunk(content=f"DEBUG_CONTEXT:{system_content}")
+                             return
+
                         if hasattr(last_msg, "tool_call_id"):
                             import json
                             try:
@@ -114,10 +135,13 @@ def chat_endpoint(
                 request.message, 
                 [h.dict() for h in request.history], 
                 user_location=request.user_location,
-                image_base64=request.image_base64
+                image_base64=request.image_base64,
+                user_id=current_user.id
             ),
             media_type="application/x-ndjson"
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

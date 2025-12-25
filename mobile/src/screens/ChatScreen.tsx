@@ -309,6 +309,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
         ...SHADOWS.small,
+        // Better press feedback - will animate on touch
+    },
+    promptCardPressed: {
+        backgroundColor: COLORS.primaryBG,
+        borderColor: COLORS.primary,
     },
     promptText: {
         fontSize: 14,

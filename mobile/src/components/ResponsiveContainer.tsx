@@ -3,11 +3,12 @@ import { View, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { COLORS, SHADOWS, RADIUS } from '../theme';
 
 export const ResponsiveContainer = ({ children }: { children: React.ReactNode }) => {
+    const { width } = useWindowDimensions();
+
     if (Platform.OS !== 'web') {
         return <>{children}</>;
     }
 
-    const { width } = useWindowDimensions();
     const isLargeScreen = width > 768;
 
     if (isLargeScreen) {
