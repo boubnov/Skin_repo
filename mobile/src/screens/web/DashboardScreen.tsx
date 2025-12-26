@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { WebSidebar } from '../../components/WebSidebar';
 import HomeScreen from '../HomeScreen';
 import RoutineScreen from '../RoutineScreen';
@@ -67,6 +68,22 @@ export default function DashboardScreen() {
                         </TouchableOpacity>
                     ) : (
                         <View style={styles.userInfo}>
+                            <TouchableOpacity
+                                onPress={() => navigation.navigate('Scanner')}
+                                style={{
+                                    backgroundColor: COLORS.secondaryButton || '#E0E0E0',
+                                    paddingVertical: 8,
+                                    paddingHorizontal: 15,
+                                    borderRadius: RADIUS.m,
+                                    marginRight: 10,
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 6
+                                }}
+                            >
+                                <Ionicons name="barcode-outline" size={20} color={COLORS.primary} />
+                                <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Scan / Link</Text>
+                            </TouchableOpacity>
                             <View style={styles.userAvatar}>
                                 <Text style={styles.userAvatarText}>U</Text>
                             </View>

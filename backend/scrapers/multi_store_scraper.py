@@ -62,6 +62,57 @@ class MultiStoreScraper(BaseScraper):
                 "description": "Protein moisturizer that combines signal peptides, growth factors, and amino acids.",
                 "ingredients": "Water/Aqua/Eau, Dicaprylyl Carbonate, Glycerin, Cetearyl Alcohol, Cetearyl Olivate, Sorbitan Olivate",
                 "store_links": {"sephora": "https://sephora.com/product/protini-polypeptide-cream-P427421", "ulta": "https://ulta.com/drunk-elephant"}
+            },
+            # --- EUROPEAN EXPANSION ---
+            {
+                "name": "A313 Vitamin A Pommade",
+                "brand": "Pharma Developpement",
+                "category": "Retinol",
+                "price_tier": "budget",
+                "confidence_tier": "scraped",
+                "description": "The cult French pharmacy retinol. Thick, obscure ointment that delivers intense Vitamin A results.",
+                "ingredients": "Synthetic Vitamin A (Retinyl Palmitate), Macrogol 400, Macrogol 4000, Polysorbate 80",
+                "store_links": {"citypharma": "https://pharmacie-citypharma.fr/fr/a313-vitamine-a-pommade-tube-50g", "amazon": "https://amazon.com/dp/B073VFNL3Z"}
+            },
+            {
+                "name": "Biafine Emulsion",
+                "brand": "Biafine",
+                "category": "Moisturizer",
+                "price_tier": "budget",
+                "confidence_tier": "scraped",
+                "description": "Legendary French healing emulsion for burns, wounds, and intense hydration. Not for daily use as a moisturizer, but a healer.",
+                "ingredients": "Trolamine, Ethylene Glycol Monostearate, Stearic Acid, Cetyl Palmitate, Solid Paraffin",
+                "store_links": {"citypharma": "https://pharmacie-citypharma.fr/fr/biafine-emulsion", "cocooncenter": "https://www.cocooncenter.co.uk/biafine"}
+            },
+            {
+                "name": "La Roche-Posay Cicaplast Baume B5+ (Europe)",
+                "brand": "La Roche-Posay",
+                "category": "Moisturizer",
+                "price_tier": "budget",
+                "confidence_tier": "scraped",
+                "description": "The European version contains Tribioma (prebiotic info usually missing vs US version). Ultimate repair balm.",
+                "ingredients": "Aqua, Hydrogenated Polyisobutene, Dimethicone, Glycerin, Butyrospermum Parkii Butter / Shea Butter, Panthenol, Madecassoside",
+                "store_links": {"boots": "https://www.boots.com/la-roche-posay-cicaplast-baume-b5-plus-100ml", "douglas": "https://www.douglas.de/la-roche-posay-cicaplast"}
+            },
+            {
+                "name": "Eucerin Oil Control Sun Gel-Cream SPF 50+",
+                "brand": "Eucerin",
+                "category": "Sunscreen",
+                "price_tier": "budget",
+                "confidence_tier": "scraped",
+                "description": "European formula with advanced filters (Tinosorb S) not found in the US. Ultra-light, anti-shine finish.",
+                "ingredients": "Aqua, Homosalate, Polymethylsilsesquioxane, Butyl Methoxydibenzoylmethane, Ethylhexyl Salicylate",
+                "store_links": {"boots": "https://www.boots.com/eucerin-sun-oil-control-face-protection-spf-50", "notino": "https://www.notino.co.uk/eucerin/oil-control"}
+            },
+            {
+                "name": "No7 Protect & Perfect Intense Advanced Serum",
+                "brand": "No7",
+                "category": "Serum",
+                "price_tier": "mid",
+                "confidence_tier": "scraped",
+                "description": "The UK's most famous anti-aging serum. Clinically proven to reduce fine lines.",
+                "ingredients": "Dimethicone, Aqua, Glycerin, Dimethicone Crosspolymer, Butylene Glycol",
+                "store_links": {"boots": "https://www.boots.com/no7-protect-perfect-intense-advanced-serum", "target": "https://target.com/p/no7"}
             }
         ]
         

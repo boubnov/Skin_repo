@@ -104,3 +104,20 @@ class JournalEntryResponse(JournalEntryBase):
     
     class Config:
         from_attributes = True
+
+# Products (Global)
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    barcode: Optional[str] = None
+    confidence_tier: Optional[str] = "scraped"
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    price_tier: Optional[str] = None
+    store_links: Optional[dict] = None # JSONB
+    # embedding: List[float] # Omitted for performance unless needed
+    
+    class Config:
+        from_attributes = True

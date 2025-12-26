@@ -12,6 +12,7 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import ChatScreen from './src/screens/ChatScreen';
 // import SettingsScreen from './src/screens/SettingsScreen';
 import WebDashboardScreen from './src/screens/web/DashboardScreen'; // RENAMED & RESTORED
+import ScannerScreen from './src/screens/ScannerScreen';
 
 // import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HistoryScreen from './src/screens/HistoryScreen';
@@ -51,6 +52,7 @@ function AppNavigator() {
     <Stack.Navigator>
       <Stack.Screen name="WebDashboard" component={WebDashboardScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: "Scan Product" }} />
     </Stack.Navigator>
   );
 }
