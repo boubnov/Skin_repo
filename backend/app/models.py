@@ -116,22 +116,41 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
+    
+    # 1. Core Identity
     name = Column(String, index=True)
     brand = Column(String, index=True)
-    description = Column(Text) # The fuzzy text
-    ingredients_text = Column(Text) # Raw ingredients string
+    category = Column(String, index=True)  # e.g. "Moisturizer", "Serum"
+    barcode = Column(String, index=True, unique=True, nullable=True) # UPC/EAN for scanning
     
-    # Hybrid Search Columns - use PostgreSQL types in production, fallbacks for testing
+    # 2. The "Tiered" Trust System
+    # "verified" = Manually checked. "scraped" = Bot found.
+    confidence_tier = Column(String, default="scraped") 
+    
+    # 3. Rich Media
+    image_url = Column(String, nullable=True)
+    
+    # 4. The "Brain" (Hybrid Search)
+    description = Column(Text) # Marketing text
+    ingredients_text = Column(Text) # Raw ingredients
+    
+    # 5. Commerce
+    price_tier = Column(String, index=True) # "budget", "mid", "luxury"
+    # {"sephora": "url...", "amazon": "url..."}
+    
+    # Hybrid Search Columns
     if HAS_PG_TYPES:
         # PostgreSQL with pgvector extension
         embedding = Column(Vector(1536))
-        metadata_info = Column(JSONB)  # e.g. {"skin_type": "oily", "price": 25}
-        search_vector = Column(TSVECTOR)  # For Full Text Search
+        metadata_info = Column(JSONB)
+        store_links = Column(JSONB)
+        search_vector = Column(TSVECTOR)
     else:
-        # SQLite-compatible fallbacks for testing
-        embedding = Column(Text, nullable=True)  # Store as JSON string
-        metadata_info = Column(JSON, nullable=True)  # Use generic JSON
-        search_vector = Column(Text, nullable=True)  # Store keywords as text 
+        # SQLite-compatible fallbacks
+        embedding = Column(Text, nullable=True)
+        metadata_info = Column(JSON, nullable=True)
+        store_links = Column(JSON, nullable=True)
+        search_vector = Column(Text, nullable=True) 
 
 class JournalEntry(Base):
     __tablename__ = "journal_entries"

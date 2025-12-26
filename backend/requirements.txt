@@ -19,3 +19,4 @@ numpy
 langchain-google-genai
 locust
 python-dotenv
+beautifulsoup4
