@@ -1,34 +1,42 @@
-
 services:
   db:
     image: pgvector/pgvector:pg16
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: skindb
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=skincare_app
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d skindb"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://user:password@db:5432/skindb
-      # Add other env vars here (e.g. GOOGLE_CLIENT_ID)
+      - DATABASE_URL=postgresql://user:password@db:5432/skincare_app
+      - REDIS_URL=redis://redis:6379/0
+      - DEV_MODE=1
+      # Pass through user API keys for the container
+      - OPENAI_API_KEY=sk-Xum8JoQUf2m5eon9z1snbw
+      - OPENAI_BASE_URL=https://api.marketplace.novo-genai.com/v1
+      - OPENAI_MODEL=gemini_3_pro
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+      - redis
     volumes:
-      - ./backend:/app  # Hot reload for dev
+      - ./backend:/app
+      - ./data:/app/data # Mount data directory for ingestion
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Redis for caching/queue
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

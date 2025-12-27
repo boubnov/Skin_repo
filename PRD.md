@@ -98,6 +98,41 @@ We have chosen **React Native** (Frontend) and **Python/FastAPI** (Backend).
 - **Requirement:** Store product images and potentially user skin progress photos.
 - **Solution:** Object Storage (S3-compatible).
 
+### 4.4 Datasets (Production Data Pipeline)
+
+The application is powered by a curated dataset of skincare products and user reviews from Kaggle.
+
+#### **Sources**
+| Dataset | Source | Records | Status |
+|---------|--------|---------|--------|
+| **8K Products** | Kaggle Sephora Dataset | 9,784 products | ✅ Ingested |
+| **Product Reviews** | Kaggle Reviews Collection | 1,100,967 reviews | ✅ Ingested |
+| **Combined Product/Review** | Natasha Messier Dataset | Additional products | ✅ Merged |
+
+#### **Data Schema**
+- **Products Table:**
+  - `name`, `brand`, `category`, `description`
+  - `ingredients_text` (raw INCI list)
+  - `embedding` (3072-dim vector for semantic search)
+  - `skin_type_compatibility` (JSON)
+  - `metadata_info` (price, ratings, etc.)
+
+- **Reviews Table:**
+  - `product_id` (FK → products)
+  - `text`, `rating` (1-5 stars)
+  - `skin_type` (reviewer's skin type label)
+  - `is_verified` (verified purchase flag)
+
+#### **Data Quality**
+- **FK Integrity:** 99.3% of reviews linked to products via `product_id`
+- **Rating Distribution:** 64% 5-star, 18% 4-star, 8% 3-star, 5% 2-star, 6% 1-star
+- **Top Product:** LANEIGE Lip Sleeping Mask (16,084 reviews)
+
+#### **Ingestion Pipeline**
+- **Resumable:** Checkpoint-based ingestion with MD5 file validation
+- **Scalable:** Processes 37,000+ reviews/second
+- **Resilient:** Exponential backoff for API calls, graceful error handling
+
 ## 5. Hosting & Infrastructure Recommendation
 
 ### 5.1 Cloud Provider: AWS (Recommended)
@@ -160,7 +195,45 @@ AWS is the industry standard and highly suitable for this architecture.
 -   **Concept:** Skincare takes 4-6 weeks to work.
 -   **Feature:** "Smart Mirror" mode where users align their face daily. The AI computes a delta: "Redness decreased by 15% since starting Product X."
 
+### 7.5 Safety Guard: Active Conflict Engine (The "Guardian")
+*The critical feature that transforms Triaskin from a tracker into a medical-grade safety platform.*
+
+-   **Concept:** Most users don't know that layering Retinol + AHA causes chemical burns, or that Benzoyl Peroxide neutralizes Vitamin C. The app must proactively prevent these mistakes.
+
+-   **Hybrid Architecture (Two-Tier Verification):**
+    1.  **Tier 1 - Rule-Based Engine:** A static database of "Red Flag Pairings" (e.g., Retinoids + AHAs = CRITICAL). Fast (<500ms), zero API cost. Handles 80% of cases.
+    2.  **Tier 2 - LLM Contextual Screening:** For complex formulations where rules aren't enough. Uses an "Expert Chemist" prompt to analyze the *entire* routine.
+
+-   **Data Normalization (INCI Backbone):**
+    -   All scanned ingredients are mapped to official **INCI names** using CosIng/PubChem databases.
+    -   Products stored with a `normalized_ingredients` JSONB array for reliable matching.
+
+-   **Risk Classification:**
+    | Level | Meaning | Example |
+    |-------|---------|---------|
+    | 🔴 **CRITICAL** | High risk of barrier damage or chemical burn | Tretinoin + Glycolic Acid |
+    | 🟡 **WARNING** | Ingredients cancel each other out | Vitamin C + Benzoyl Peroxide |
+    | 🟢 **ADVICE** | Suboptimal layering order | Oil-based before water-based |
+
+-   **Proactive UI/UX:**
+    -   **Toast Notification:** Yellow banner appears immediately when a conflicting product is linked.
+    -   **Conflict Badge:** Red "⚠" icon next to conflicting products in the routine checklist.
+    -   **Conflict Modal:** Interrupts "Add to Routine" flow with "Override" or "Resolve" options.
+    -   **AI Consultant Insight:** Proactive message: *"I noticed you added Retinol to your evening routine, which conflicts with your Glycolic Acid."*
+
+-   **Expert Intent Logic Flow:**
+    1.  User taps "Link Product" for a Morning Serum.
+    2.  System retrieves the product's normalized INCI list.
+    3.  Engine cross-references against all products in the *same* and *opposite* routine slots.
+    4.  If conflict found → **Proactive Guard Alert** pushed to client.
+
+-   **Success Metrics:**
+    -   100% detection rate for CRITICAL pairings.
+    -   <500ms latency for Tier 1 rule-based checks.
+    -   >70% of users take corrective action after an alert.
+
 ## 8. UX & Engagement (The "Habit" Loop)
+
 *To keep users returning daily, not just when they have a problem:*
 
 ### 8.1 Routine Builder (Gamification)

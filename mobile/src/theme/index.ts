@@ -1,35 +1,33 @@
-// Warm Neutral Palette (Aesop/Hims inspired)
-// Premium, gender-neutral, professional healthcare aesthetic
+// Triaskin AI Interface Refresh: "Dermatological Clarity"
+// High-end, futuristic skincare clinic - sterile but welcoming
 
 export const COLORS = {
-    // Primary - Warm Brown/Tan
-    primary: '#8B7355',
-    primaryLight: '#C4956A', // Copper accent
-    primaryBG: '#F5F0EB', // Warm cream background
+    // The Primary Palette (Hydration & Trust)
+    primary: '#00D2FF',      // Electric Cyan Start
+    primaryAccent: '#3A7BD5', // Electric Cyan End
+    accent: '#FF9A8B',       // Soft Coral (Human Tone)
+    primaryBG: '#FAFBFF',    // Active White (Base Surface)
 
-    // Secondary
-    secondaryButton: '#F0EBE5',
-    secondaryText: '#6B6560',
-
-    // Status
-    success: '#6B8E6B', // Sage green
-    successBG: '#F0F5F0',
-    error: '#B85C5C',   // Muted red
-    errorBG: '#FDF5F5',
-    warning: '#C99A4D', // Warm amber
-    warningBG: '#FDF8F0',
+    // Secondary / Status
+    secondaryButton: '#F0F4F8',
+    secondaryText: '#636E72', // Slate Grey (Body Text)
+    success: '#00B894',
+    successBG: '#EBFBF5',
+    error: '#D63031',
+    errorBG: '#FFF5F5',
+    warning: '#FDCB6E',
+    warningBG: '#FFF9EB',
 
     // Neutrals
-    background: '#FAF8F5', // Warm off-white
+    background: '#FAFBFF',   // Active White
     card: '#FFFFFF',
-    text: '#2D2D2D',    // Near black
-    textLight: '#8A8580', // Warm gray
-    border: '#E8E4DF',  // Warm light gray
+    text: '#2D3436',         // Dark Charcoal (Headers)
+    textLight: '#636E72',    // Slate Grey (Body)
+    border: '#E1E8ED',       // Card Border
 
-    // Gradients (start, end)
-    gradientPrimary: ['#8B7355', '#C4956A'],
-    gradientWarm: ['#C4956A', '#D4A574'],
-    gradientCool: ['#6B8E6B', '#8BA88B'],
+    // Gradients (Electric Cyan)
+    gradientPrimary: ['#00D2FF', '#3A7BD5'],
+    gradientAccent: ['#FF9A8B', '#FF7F6D'],
 };
 
 export const TYPOGRAPHY = {
@@ -89,33 +87,33 @@ export const SPACING = {
 
 export const SHADOWS = {
     small: {
-        shadowColor: "#2D2D2D",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 3,
-        elevation: 2,
+        shadowColor: "#000000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 4,
+        elevation: 1,
     },
     medium: {
-        shadowColor: "#2D2D2D",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 4,
+        shadowColor: "#2D3436",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
+        elevation: 5,
     },
     large: {
-        shadowColor: "#2D2D2D",
-        shadowOffset: { width: 0, height: 8 },
+        shadowColor: "#2D3436",
+        shadowOffset: { width: 0, height: 15 },
         shadowOpacity: 0.08,
-        shadowRadius: 24,
-        elevation: 8,
+        shadowRadius: 30,
+        elevation: 10,
     },
 };
 
 export const RADIUS = {
-    s: 8,
-    m: 12,
-    l: 16,
-    xl: 24,
+    s: 12, // Softer
+    m: 16, // Softer
+    l: 24, // Bouncy
+    xl: 32, // Extra Bouncy
     full: 9999,
 };
 

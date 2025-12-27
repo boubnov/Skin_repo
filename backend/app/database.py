@@ -15,9 +15,11 @@ if TESTING:
     )
 else:
     # Use DATABASE_URL if set, otherwise try SQLite for local dev
+    # Note: Use parent directory since Kaggle ingestion creates DB there
+    default_db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "skincare_app.db")
     SQLALCHEMY_DATABASE_URL = os.getenv(
         "DATABASE_URL", 
-        "sqlite:///./skincare_app.db"  # Default to SQLite for easy local dev
+        f"sqlite:///{default_db_path}"  # Use absolute path to root-level DB
     )
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         engine = create_engine(

@@ -63,6 +63,8 @@ class UserProductResponse(UserProductBase):
     id: int
     user_id: int
     date_opened: Optional[datetime] = None
+    verification_status: str = "ready"
+    is_analyzing: bool = False
     
     class Config:
         from_attributes = True
@@ -113,6 +115,7 @@ class ProductResponse(BaseModel):
     category: Optional[str] = None
     barcode: Optional[str] = None
     confidence_tier: Optional[str] = "scraped"
+    is_verified: bool = False
     image_url: Optional[str] = None
     description: Optional[str] = None
     price_tier: Optional[str] = None

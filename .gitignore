@@ -67,3 +67,20 @@ logs/
 # Temporary files
 tmp/
 temp/
+
+# Large data files (use LFS or download separately)
+data/Kaggle/reviews/*.csv
+data/Kaggle/natahsamessier/raw_data/*.csv
+data/Kaggle/natahsamessier/clean_data/*.csv
+ingestion_log.txt
+ingestion_pid.txt
+test_output*.txt
+# Data files - download separately from Kaggle
+data/
+*.csv
+
+# Temp files
+ingestion_log.txt
+ingestion_pid.txt
+test_output*.txt
+backend/ingestion_state.json

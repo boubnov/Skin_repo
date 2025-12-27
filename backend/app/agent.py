@@ -38,8 +38,15 @@ def create_tools(db: Session):
             encoded_name = p.name.replace(" ", "+")
             affiliate_url = f"https://www.amazon.com/s?k={encoded_name}&tag={affiliate_tag}"
             
-            # Enrich metadata
-            metadata = p.metadata_info or {}
+            # Enrich metadata - parse from JSON string if needed
+            raw_meta = p.metadata_info
+            if isinstance(raw_meta, str):
+                try:
+                    metadata = json.loads(raw_meta)
+                except (json.JSONDecodeError, TypeError):
+                    metadata = {}
+            else:
+                metadata = raw_meta or {}
             metadata["affiliate_url"] = affiliate_url
             
             product_list.append({

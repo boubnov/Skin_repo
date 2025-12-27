@@ -7,7 +7,7 @@ import random
 class BaseScraper:
     def __init__(self, user_agent: str = None):
         self.headers = {
-            "User-Agent": user_agent or "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": user_agent or "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
         }
     
     def fetch_page(self, url: str) -> Optional[BeautifulSoup]:

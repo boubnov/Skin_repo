@@ -74,6 +74,11 @@ class UserProduct(Base):
     category = Column(String, nullable=True) # e.g. "Cleanser", "Serum"
     notes = Column(Text, nullable=True)
     rating = Column(Integer, nullable=True)
+    
+    # Intelligent Shelf Fields
+    verification_status = Column(String, default="ready") # "pending", "ready", "failed"
+    is_analyzing = Column(Boolean, default=False)
+    
     date_opened = Column(DateTime(timezone=True), nullable=True)
     date_finished = Column(DateTime(timezone=True), nullable=True)
     log_date = Column(DateTime(timezone=True), server_default=func.now()) # Keep for legacy/ordering
@@ -126,6 +131,7 @@ class Product(Base):
     # 2. The "Tiered" Trust System
     # "verified" = Manually checked. "scraped" = Bot found.
     confidence_tier = Column(String, default="scraped") 
+    is_verified = Column(Boolean, default=False)
     
     # 3. Rich Media
     image_url = Column(String, nullable=True)
@@ -141,16 +147,50 @@ class Product(Base):
     # Hybrid Search Columns
     if HAS_PG_TYPES:
         # PostgreSQL with pgvector extension
-        embedding = Column(Vector(1536))
+        embedding = Column(Vector(3072))
         metadata_info = Column(JSONB)
         store_links = Column(JSONB)
         search_vector = Column(TSVECTOR)
+        skin_type_compatibility = Column(JSONB) # e.g. {"oily": 0.9}
     else:
         # SQLite-compatible fallbacks
         embedding = Column(Text, nullable=True)
         metadata_info = Column(JSON, nullable=True)
         store_links = Column(JSON, nullable=True)
-        search_vector = Column(Text, nullable=True) 
+        search_vector = Column(Text, nullable=True)
+        skin_type_compatibility = Column(JSON, nullable=True)
+
+    # V2 Source Tracking
+    source = Column(String, default="manual") # "kaggle", "user_scan", "scraper"
+    source_id = Column(String, nullable=True) # ID in external system
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    reviews = relationship("Review", back_populates="product")
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
+    
+    author = Column(String, nullable=True)
+    rating = Column(Integer, nullable=True)
+    text = Column(Text, nullable=True)
+    
+    # AI Enrichment
+    skin_type_label = Column(String, nullable=True) # "oily", "dry" (from Natasha's dataset)
+    sentiment_score = Column(Integer, nullable=True) # -1 to 1 scale (stored as float usually, but verify)
+    # Actually Natasha's dataset might have float sentiment. Let's use Float.
+    sentiment_float = Column(String, nullable=True) # storing as string or float? SQLAlchemy Float is safe.
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    if HAS_PG_TYPES:
+        embedding = Column(Vector(3072))
+    else:
+        embedding = Column(Text, nullable=True)
+
+    product = relationship("Product", back_populates="reviews") 
 
 class JournalEntry(Base):
     __tablename__ = "journal_entries"

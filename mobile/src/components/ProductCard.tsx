@@ -7,6 +7,7 @@ type Product = {
     brand: string;
     description: string;
     metadata?: any;
+    is_verified?: boolean;
 };
 
 type Props = {
@@ -18,10 +19,21 @@ export default function ProductCard({ product }: Props) {
         <View style={styles.card}>
             <View style={styles.imagePlaceholder}>
                 <Text style={styles.emoji}>🧴</Text>
+                {product.is_verified && (
+                    <View style={styles.verifiedBadge}>
+                        <Image
+                            source={{ uri: '/Users/mbvk/Documents/skin_app/company_images/company_logo.png' }}
+                            style={styles.verifiedIcon}
+                            resizeMode="contain"
+                        />
+                    </View>
+                )}
             </View>
             <View style={styles.content}>
                 <Text style={styles.brand}>{product.brand}</Text>
-                <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+                <View style={styles.nameRow}>
+                    <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+                </View>
 
                 <View style={styles.metaRow}>
                     {product.metadata?.price && (
@@ -32,7 +44,7 @@ export default function ProductCard({ product }: Props) {
                     {product.metadata?.rating && (
                         <View style={styles.ratingContainer}>
                             <Text>⭐️</Text>
-                            <Text style={styles.ratingText}>{product.metadata.rating}</Text>
+                            <Text style={styles.ratingText}>{Number(product.metadata.rating).toFixed(1)}</Text>
                         </View>
                     )}
                 </View>
@@ -60,20 +72,20 @@ export default function ProductCard({ product }: Props) {
 const styles = StyleSheet.create({
     card: {
         backgroundColor: COLORS.card,
-        borderRadius: RADIUS.m,
+        borderRadius: RADIUS.l,
         width: 180,
         marginRight: SPACING.s,
         ...SHADOWS.medium,
         padding: SPACING.m,
         marginBottom: SPACING.s,
         borderWidth: 1,
-        borderColor: COLORS.border
+        borderColor: COLORS.border,
     },
     imagePlaceholder: {
         width: '100%',
         height: 100,
         backgroundColor: COLORS.background,
-        borderRadius: RADIUS.s,
+        borderRadius: RADIUS.m,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: SPACING.s,
@@ -88,12 +100,35 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
         marginBottom: 2
     },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: SPACING.s,
+    },
     name: {
         fontSize: 15,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: COLORS.text,
-        marginBottom: SPACING.s,
         height: 42,
+        flex: 1,
+    },
+    verifiedBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...SHADOWS.small,
+        borderWidth: 1,
+        borderColor: COLORS.primaryBG,
+    },
+    verifiedIcon: {
+        width: 14,
+        height: 14,
     },
     metaRow: {
         flexDirection: 'row',
@@ -121,18 +156,20 @@ const styles = StyleSheet.create({
     },
     button: {
         paddingVertical: 10,
-        borderRadius: RADIUS.s,
+        borderRadius: RADIUS.xl, // Highly rounded
         alignItems: 'center',
         marginBottom: 6,
     },
     buyButton: {
-        backgroundColor: COLORS.primary, // Teal
-        ...SHADOWS.small
+        backgroundColor: COLORS.primary,
+        // @ts-ignore - linear-gradient is supported in web styles
+        backgroundImage: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryAccent} 100%)`,
+        ...SHADOWS.small,
     },
     buyButtonText: {
         color: '#fff',
         fontSize: 13,
-        fontWeight: 'bold',
+        fontWeight: '700',
     },
     detailsButton: {
         backgroundColor: COLORS.secondaryButton,

@@ -148,21 +148,19 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -100,
         right: -100,
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        backgroundColor: COLORS.primaryBG,
-        opacity: 0.8,
+        width: 400,
+        height: 400,
+        borderRadius: 200,
+        backgroundColor: 'rgba(0, 210, 255, 0.05)',
     },
     backgroundCircle2: {
         position: 'absolute',
         bottom: -50,
         left: -50,
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        backgroundColor: COLORS.primaryBG,
-        opacity: 0.5,
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        backgroundColor: 'rgba(58, 123, 213, 0.03)',
     },
 
     content: {
@@ -182,12 +180,12 @@ const styles = StyleSheet.create({
     },
     title: {
         ...TYPOGRAPHY.h1,
-        color: COLORS.primary,
+        color: COLORS.text,
         marginBottom: SPACING.xs,
     },
     subtitle: {
         ...TYPOGRAPHY.bodyLarge,
-        color: COLORS.secondaryText,
+        color: COLORS.textLight,
         textAlign: 'center',
     },
 
@@ -198,6 +196,8 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.xl,
         padding: SPACING.l,
         ...SHADOWS.large,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
 
     // Trust Badges
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     badge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.primaryBG,
+        backgroundColor: COLORS.successBG,
         paddingVertical: SPACING.xs,
         paddingHorizontal: SPACING.s,
         borderRadius: RADIUS.full,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         ...TYPOGRAPHY.bodySmall,
-        color: COLORS.primary,
+        color: COLORS.success,
         fontWeight: '600',
     },
 
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     termsLink: {
-        color: COLORS.primary,
+        color: COLORS.primaryAccent,
         fontWeight: '600',
     },
 
@@ -275,15 +275,15 @@ const styles = StyleSheet.create({
     // Google Button
     googleButton: {
         flexDirection: 'row',
-        backgroundColor: COLORS.card,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        backgroundColor: COLORS.primary,
+        // @ts-ignore
+        backgroundImage: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryAccent} 100%)`,
         paddingVertical: 14,
         paddingHorizontal: SPACING.l,
         borderRadius: RADIUS.full,
         alignItems: 'center',
         justifyContent: 'center',
-        ...SHADOWS.small,
+        ...SHADOWS.medium,
     },
     googleButtonDisabled: {
         opacity: 0.5,
@@ -291,12 +291,13 @@ const styles = StyleSheet.create({
     googleIcon: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#4285F4',
+        color: '#FFFFFF',
         marginRight: SPACING.s,
     },
     googleButtonText: {
         ...TYPOGRAPHY.button,
-        color: COLORS.text,
+        color: '#FFFFFF',
+        fontWeight: '700',
     },
 
     // Footer

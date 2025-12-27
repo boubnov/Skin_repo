@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme';
 
 type WebSidebarProps = {
@@ -14,16 +14,20 @@ const MENU_ITEMS = [
     { id: 'shelf', label: 'My Shelf' },
     { id: 'routine', label: 'My Routine' },
     { id: 'chat', label: 'AI Consultant' },
-    { id: 'history', label: 'Skin History' },
+    { id: 'history', label: 'The Skin Journey' },
 ];
 
 export const WebSidebar = ({ activeTab, onTabChange, onLogout, isLoggedIn = true, onLogin }: WebSidebarProps & { isLoggedIn?: boolean, onLogin?: () => void }) => {
     return (
         <View style={styles.container}>
             {/* Clean text logo */}
+            {/* Premium Circuitry Logo */}
             <View style={styles.header}>
-                <Text style={styles.brandName}>Skincare</Text>
-                <Text style={styles.brandAccent}>AI</Text>
+                <Image
+                    source={require('../../assets/company_logo.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                />
             </View>
 
             {/* Navigation */}
@@ -69,28 +73,26 @@ const styles = StyleSheet.create({
     container: {
         width: 220,
         height: '100%',
-        backgroundColor: '#3D3630', // Warm dark charcoal
+        backgroundColor: 'rgba(255, 255, 255, 0.7)', // White glassmorphism
         paddingVertical: SPACING.xl,
         paddingHorizontal: 0,
         justifyContent: 'flex-start',
+        borderRightWidth: 1,
+        borderRightColor: COLORS.border,
+        // @ts-ignore - backdropFilter is supported in web
+        backdropFilter: 'blur(20px)',
+        // @ts-ignore
+        webkitBackdropFilter: 'blur(20px)',
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
         paddingHorizontal: SPACING.l,
         marginBottom: SPACING.xxl,
+        height: 60,
+        justifyContent: 'center',
     },
-    brandName: {
-        fontSize: 22,
-        fontWeight: '300',
-        color: '#FFFFFF',
-        letterSpacing: 1,
-    },
-    brandAccent: {
-        fontSize: 22,
-        fontWeight: '600',
-        color: COLORS.primaryLight,
-        marginLeft: 4,
+    logo: {
+        height: 100,
+        width: 200,
     },
     menu: {
         flex: 1,
@@ -103,31 +105,31 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     activeMenuItem: {
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        backgroundColor: 'rgba(0, 210, 255, 0.08)', // Faded cyan
     },
     activeIndicator: {
         position: 'absolute',
         left: 0,
         top: 8,
         bottom: 8,
-        width: 3,
-        backgroundColor: COLORS.primaryLight,
+        width: 4,
+        backgroundColor: COLORS.primary,
         borderTopRightRadius: 2,
         borderBottomRightRadius: 2,
     },
     label: {
         fontSize: 15,
-        color: '#9A9590', // Warm gray
+        color: COLORS.textLight, // Slate Grey
         fontWeight: '400',
         letterSpacing: 0.3,
     },
     activeLabel: {
-        color: '#FFFFFF',
-        fontWeight: '500',
+        color: COLORS.primaryAccent,
+        fontWeight: '600',
     },
     footer: {
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.08)',
+        borderTopColor: COLORS.border,
         paddingTop: SPACING.m,
         paddingHorizontal: SPACING.l,
     },
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
         paddingVertical: SPACING.s,
     },
     logoutText: {
-        color: '#9A9590',
+        color: COLORS.textLight,
         fontSize: 14,
         fontWeight: '400',
     },

@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [hasProfile, setHasProfile] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false); // Start false for instant load
 
     // Check for stored token on app launch
     useEffect(() => {

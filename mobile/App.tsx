@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { useWindowDimensions, Platform, ActivityIndicator, View, Text } from 'react-native';
+import { useWindowDimensions, Platform, ActivityIndicator, View, Text, Animated } from 'react-native';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -35,19 +35,7 @@ function MainTabs() {
 */
 
 function AppNavigator() {
-  const { userToken, isLoading, hasProfile } = useAuth();
-  const { width } = useWindowDimensions();
-  // FORCE DESKTOP MODE for debugging
-  const isDesktop = true; // Platform.OS === 'web' && width > 768;
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
+  // Skip loading state - render dashboard immediately
   return (
     <Stack.Navigator>
       <Stack.Screen name="WebDashboard" component={WebDashboardScreen} options={{ headerShown: false }} />

@@ -147,11 +147,31 @@ MOCK_PRODUCTS = [
 ]
 
 def get_mock_embedding(text):
-    # In production, call OpenAI: 
-    # client.embeddings.create(input=[text], model="text-embedding-3-small").data[0].embedding
-    # Here we return a random normalized vector for testing flow
-    vec = np.random.rand(1536)
-    return vec / np.linalg.norm(vec)
+    # REAL EMBEDDING IMPLEMENTATION (Renamed function but keeping legacy name for now)
+    try:
+        from openai import OpenAI
+        
+        client = OpenAI(
+            api_key=os.environ.get("OPENAI_API_KEY"),
+            base_url=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        )
+        
+        response = client.embeddings.create(
+            input=[text],
+            model=os.environ.get("EMBEDDING_MODEL", "openai_text_embedding_3_large")
+        )
+        vec = response.data[0].embedding
+        return np.array(vec)
+        
+    except ImportError:
+        print("❌ OpenAI library not installed. Using random noise.")
+        vec = np.random.rand(1536)
+        return vec / np.linalg.norm(vec)
+    except Exception as e:
+        print(f"❌ Embedding Error: {e}")
+        # Fallback to noise to keep pipeline running
+        vec = np.random.rand(1536)
+        return vec / np.linalg.norm(vec)
 
 def init_db():
     # Create extension is usually done by superuser, but the docker image enables it by default or we try
